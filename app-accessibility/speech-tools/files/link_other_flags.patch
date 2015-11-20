@@ -1,0 +1,52 @@
+--- ./config/compilers/gcc_defaults.mak.orig	2013-05-31 12:36:30.393503147 +0100
++++ ./config/compilers/gcc_defaults.mak	2013-05-31 12:36:44.607178436 +0100
+@@ -49,6 +49,7 @@
+ 
+ CFLAGS  = $(GCC_SYSTEM_OPTIONS) $(CC_OTHER_FLAGS)
+ CXXFLAGS  =  $(GCC_SYSTEM_OPTIONS) -fno-implicit-templates $(CXX_OTHER_FLAGS)
++LINKFLAGS  = $(GCC_SYSTEM_OPTIONS) $(LINK_OTHER_FLAGS)
+ 
+ DEBUG_CCFLAGS   = -g
+ DEBUG_CXXFLAGS  = -g
+@@ -82,7 +82,7 @@
+ SHARED_LINKFLAGS = 
+ 
+ ifndef GCC_MAKE_SHARED_LIB
+-    MAKE_SHARED_LIB = $(CXX) -shared -o XXX
++    MAKE_SHARED_LIB = $(CXX) $(CXXFLAGS) -shared -o XXX
+ else
+     MAKE_SHARED_LIB = $(GCC_MAKE_SHARED_LIB)
+ endif
+--- ./config/compilers/gcc42.mak~	2013-05-31 12:51:06.000000000 +0100
++++ ./config/compilers/gcc42.mak	2013-05-31 12:56:03.121760343 +0100
+@@ -54,7 +54,7 @@
+ SHARED_LINKFLAGS =
+ 
+  ifndef GCC_MAKE_SHARED_LIB
+-    MAKE_SHARED_LIB = $(CXX) -shared -o XXX -Wl,-soname,YYY
++    MAKE_SHARED_LIB = $(CXX) $(CXXFLAGS) -shared -o XXX -Wl,-soname,YYY
+  else
+      MAKE_SHARED_LIB = $(GCC_MAKE_SHARED_LIB)
+  endif
+--- ./wrappers/perl5/Makefile~	2007-02-25 14:40:39.000000000 +0000
++++ ./wrappers/perl5/Makefile	2013-05-31 12:56:02.335074706 +0100
+@@ -82,7 +82,7 @@
+ 
+ # implicit build rules 
+ $(ALL_WRAPPERS) : %.so : %_wrap.o
+-	$(CXX) -shared $(LIBS) -o $@ $<
++	$(CXX) $(CXXFLAGS) -shared $(LIBS) -o $@ $<
+ 
+ .make_wrappers : $(ALL_WRAPPERS) 
+ 
+--- ./main/Makefile~	2005-08-02 19:57:27.000000000 +0100
++++ ./main/Makefile	2013-07-07 12:50:15.594330803 +0100
+@@ -94,7 +94,7 @@
+ 	$(CXX_COMMAND) -o $@ -DESTLIBDIR=\"$(EST_HOME)/lib\" $($*_SRC)
+ 
+ $(ALL_EXECS) : % : $(LIBDEPS) %_main.o 
+-	$(strip $(LINK_COMMAND) -o $@ $@_main.o $(LIBS) $($(@:=_LIBS)))
++	$(strip $(LINK_COMMAND) -o $@ $@_main.o $(LINKFLAGS) $(LIBS) $($(@:=_LIBS)))
+ 
+ .make_execs : $(ALL_EXECS) 
+ 

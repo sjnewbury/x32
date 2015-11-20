@@ -1,0 +1,14 @@
+--- ./src/miniacc.h.orig	2013-08-19 17:39:18.692480492 +0000
++++ ./src/miniacc.h	2013-08-19 21:31:29.067409491 +0000
+@@ -6787,7 +6787,11 @@
+ ACCLIB_PUBLIC_NOINLINE(int, acc_debug_align_check_query) (void)
+ {
+ #if (ACC_ARCH_AMD64 || ACC_ARCH_I386) && (ACC_ASM_SYNTAX_GNUC)
++#if !(ACC_ARCH_I386) && (__ILP32__)
++    acc_uint64e_t r;
++#else
+     size_t r;
++#endif
+     __asm__ __volatile__("pushf\n pop %0\n" : "=a" (r) : : __ACC_ASM_CLOBBER);
+     return (int)(r >> 18) & 1;
+ #elif (ACC_ARCH_I386) && (ACC_ASM_SYNTAX_MSC)

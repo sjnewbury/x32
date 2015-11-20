@@ -1,0 +1,25 @@
+--- mysql-connector-odbc-5.1.6.orig/configure.in	2009-11-05 21:34:53.000000000 +0000
++++ mysql-connector-odbc-5.1.6/configure.in	2012-09-29 12:10:01.791084488 +0100
+@@ -70,21 +70,7 @@
+ # LTDL
+ #
+ ###################################################################
+-# FIXME don't set LDFLAGS, add -Lpath when linking
+-# FIXME handle 64 bit if other than "lib" directory
+-AC_ARG_WITH(ltdl-path,
+-[AC_HELP_STRING([--with-ltdl-path=DIR],
+-                [Where libtool "libltdl" and "ltdl.h" are installed])],
+-[
+- CPPFLAGS="$CPPFLAGS -I$withval/include"
+- LDFLAGS="$LDFLAGS -L$withval/lib"
+- # We prefer the libtool .la file that define dependencies
+- if test -f "$withval/lib/libltdl.la" ; then
+-   LTDL_LIB="$withval/lib/libltdl.la"
+-  else
+-   LTDL_LIB="-L$withval/lib -lltdl"
+-  fi
+-], [LTDL_LIB="-lltdl"])
++LTDL_LIB="-lltdl"
+ AC_SUBST(LTDL_LIB)
+ 
+ dnl AC_CHECK_LIB(ltdl, lt_dlinit, [],

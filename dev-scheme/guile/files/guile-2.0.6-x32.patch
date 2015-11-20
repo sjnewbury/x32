@@ -1,0 +1,28 @@
+--- libguile/vm-i-scheme.c~	2012-07-02 10:28:13.000000000 +0100
++++ libguile/vm-i-scheme.c	2013-03-16 01:59:47.890773936 +0000
+@@ -239,10 +239,10 @@
+ 
+ # define ASM_ADD(x, y)							\
+     {									\
+-      asm volatile goto ("mov %1, %%rcx; "				\
++      asm volatile goto ("mov %q1, %%rcx; "				\
+ 			 "test %[tag], %%cl; je %l[slow_add]; "		\
+ 			 "test %[tag], %0;   je %l[slow_add]; "		\
+-			 "add %0, %%rcx;     jo %l[slow_add]; "		\
++			 "add %q0, %%rcx;     jo %l[slow_add]; "		\
+ 			 "sub %[tag], %%rcx; "				\
+ 			 "mov %%rcx, (%[vsp])\n"			\
+ 			 : /* no outputs */				\
+@@ -257,10 +257,10 @@
+ 
+ # define ASM_SUB(x, y)							\
+     {									\
+-      asm volatile goto ("mov %0, %%rcx; "				\
++      asm volatile goto ("mov %q0, %%rcx; "				\
+ 			 "test %[tag], %%cl; je %l[slow_sub]; "		\
+ 			 "test %[tag], %1;   je %l[slow_sub]; "		\
+-			 "sub %1, %%rcx;     jo %l[slow_sub]; "		\
++			 "sub %q1, %%rcx;     jo %l[slow_sub]; "		\
+ 			 "add %[tag], %%rcx; "				\
+ 			 "mov %%rcx, (%[vsp])\n"			\
+ 			 : /* no outputs */				\

@@ -1,0 +1,46 @@
+--- acinclude.m4~	2012-08-29 19:13:21.000000000 +0000
++++ acinclude.m4	2012-09-27 21:37:30.993038323 +0000
+@@ -5,7 +5,11 @@
+       BUILD_ARCH_DIR=amd64
+       INSTALL_ARCH_DIR=amd64
+       JRE_ARCH_DIR=amd64
+-      ARCHFLAG="-m64"
++      if test "x$ABI" != "xx32"; then
++      	ARCHFLAG="-m64"
++      else
++      	ARCHFLAG="-mx32"
++      fi
+       ;;
+     i?86)
+       BUILD_ARCH_DIR=i586
+--- /dev/null	2012-09-24 10:00:54.699080822 +0000
++++ patches/x32.patch	2012-09-27 23:15:56.270690098 +0000
+@@ -0,0 +1,28 @@
++--- openjdk/hotspot/make/linux/makefiles/gcc.make~	2012-08-30 19:29:26.000000000 +0000
+++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2012-09-27 22:09:59.268891312 +0000
++@@ -113,7 +113,11 @@
++ 
++ ARCHFLAG = $(ARCHFLAG/$(BUILDARCH))
++ ARCHFLAG/i486    = -m32
+++ifeq ($(ABI), x32)
+++ARCHFLAG/amd64   = -mx32
+++else
++ ARCHFLAG/amd64   = -m64
+++endif
++ ARCHFLAG/ia64    =
++ ARCHFLAG/sparc   = -m32 -mcpu=v9
++ ARCHFLAG/sparcv9 = -m64 -mcpu=v9
++--- openjdk/hotspot/make/linux/makefiles/amd64.make~	2012-08-30 19:29:26.000000000 +0000
+++++ openjdk/hotspot/make/linux/makefiles/amd64.make	2012-09-27 22:14:54.112364765 +0000
++@@ -29,7 +29,11 @@
++ # Must also specify if CPU is little endian
++ CFLAGS += -DVM_LITTLE_ENDIAN
++ 
+++ifeq ($(ABI), x32)
+++CFLAGS += -D_ILP32=1
+++else
++ CFLAGS += -D_LP64=1
+++endif
++ 
++ # The serviceability agent relies on frame pointer (%rbp) to walk thread stack
++ ifndef USE_SUNCC

@@ -1,0 +1,14 @@
+--- /dev/null	2012-10-04 14:36:47.136946119 +0100
++++ patches/no-x86-march.patch	2012-10-04 22:50:06.178211466 +0100
+@@ -0,0 +1,11 @@
++--- openjdk/hotspot/make/linux/makefiles/gcc.make.orig	2012-10-04 22:41:37.980568271 +0100
+++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2012-08-30 20:29:26.000000000 +0100
++@@ -112,7 +112,7 @@
++ endif
++ 
++ ARCHFLAG = $(ARCHFLAG/$(BUILDARCH))
++-ARCHFLAG/i486    = -m32 -march=i586
+++ARCHFLAG/i486    = -m32
++ ARCHFLAG/amd64   = -m64
++ ARCHFLAG/ia64    =
++ ARCHFLAG/sparc   = -m32 -mcpu=v9

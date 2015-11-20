@@ -1,0 +1,11 @@
+--- mysql-connector-odbc-5.1.6.orig/configure.in	2009-11-05 21:34:53.000000000 +0000
++++ mysql-connector-odbc-5.1.6/configure.in	2012-09-28 18:40:01.139075517 +0100
+@@ -82,7 +82,7 @@
+  if test -f "$withval/lib/libltdl.la" ; then
+    LTDL_LIB="$withval/lib/libltdl.la"
+   else
+-   LTDL_LIB="-L$withval/lib -lltdl"
++   LTDL_LIB="-lltdl"
+   fi
+ ], [LTDL_LIB="-lltdl"])
+ AC_SUBST(LTDL_LIB)

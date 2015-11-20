@@ -1,0 +1,12 @@
+--- /dev/null	2012-10-04 14:36:47.136946119 +0100
++++ patches/smartcardio-append-cflags.patch	2012-10-05 19:34:19.662372759 +0100
+@@ -0,0 +1,9 @@
++--- openjdk/jdk/make/sun/security/smartcardio/Makefile~	2012-08-31 12:21:12.000000000 +0100
+++++ openjdk/jdk/make/sun/security/smartcardio/Makefile	2012-10-05 19:32:52.013502036 +0100
++@@ -76,5 +76,5 @@
++   OTHER_LDLIBS = $(JVMLIB) winscard.lib
++ else
++   OTHER_LDLIBS = $(LIBDL) $(JVMLIB)
++-  OTHER_CFLAGS = -D__sun_jdk
+++  OTHER_CFLAGS += -D__sun_jdk
++ endif

@@ -1,0 +1,27 @@
+--- /usr/portage/eclass/toolchain.eclass	2013-05-24 22:31:16.000000000 +0100
++++ toolchain.eclass	2013-04-26 16:17:04.017374384 +0100
+@@ -281,7 +282,7 @@
+ 
+ 	# Set where to download gcc itself depending on whether we're using a
+ 	# prerelease, snapshot, or release tarball.
+-	if [[ -n ${PRERELEASE} ]] ; then
++	if [[ -n ${PRERELEASE} && -z ${gcc_LIVE_BRANCH} ]] ; then
+ 		GCC_SRC_URI="ftp://gcc.gnu.org/pub/gcc/prerelease-${PRERELEASE}/gcc-${PRERELEASE}.tar.bz2"
+ 	elif [[ -n ${SNAPSHOT} ]] ; then
+ 		GCC_SRC_URI="ftp://gcc.gnu.org/pub/gcc/snapshots/${SNAPSHOT}/gcc-${SNAPSHOT}.tar.bz2"
+@@ -1512,14 +1496,6 @@
+ 	cd "${WORKDIR}"/build
+ 	# Do allow symlinks in private gcc include dir as this can break the build
+ 	find gcc/include*/ -type l -delete
+-	# Copy over the info pages.  We disabled their generation earlier, but the
+-	# build system only expects to install out of the build dir, not the source.  #464008
+-	mkdir -p gcc/doc
+-	for x in "${S}"/gcc/doc/*.info* ; do
+-		if [[ -f ${x} ]] ; then
+-			cp "${x}" gcc/doc/ || die
+-		fi
+-	done
+ 	# Remove generated headers, as they can cause things to break
+ 	# (ncurses, openssl, etc).
+ 	while read x ; do
+ 

@@ -1,0 +1,11 @@
+--- configure.ac~	2015-04-25 13:23:51.000000000 +0100
++++ configure.ac	2015-04-25 14:53:49.612556077 +0100
+@@ -49,7 +49,7 @@
+ 
+ AC_MIPS_ABI
+ CC="$CC $abi"
+-libdir="$libdir$abilibdirext"
++dnl libdir="$libdir$abilibdirext"
+ 
+ AC_C___ATTRIBUTE__
+ 

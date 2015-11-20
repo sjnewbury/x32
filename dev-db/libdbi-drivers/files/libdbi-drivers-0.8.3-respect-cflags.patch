@@ -1,0 +1,29 @@
+--- ./configure.in~	2013-06-04 09:09:39.000000000 +0100
++++ ./configure.in	2013-06-04 09:29:28.036728005 +0100
+@@ -56,17 +56,17 @@
+ 
+         case $host in
+         *-*-linux*)
+-                DEBUG="-g -Wall -D_REENTRANT -D__NO_MATH_INLINES -fsigned-char"
+-                CFLAGS="-O20 -ffast-math -D_REENTRANT -fsigned-char"
+-                PROFILE="-pg -g -O20 -ffast-math -D_REENTRANT -fsigned-char";;
++                DEBUG="${CFLAGS} -g -Wall -D_REENTRANT -D__NO_MATH_INLINES -fsigned-char"
++                CFLAGS="${CFLAGS} -O20 -ffast-math -D_REENTRANT -fsigned-char"
++                PROFILE="${CFLAGS}  -pg -g -O20 -ffast-math -D_REENTRANT -fsigned-char";;
+         sparc-sun-*)
+-                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char -mv8"
+-                CFLAGS="-O20 -ffast-math -D__NO_MATH_INLINES -fsigned-char -mv8"
+-                PROFILE="-pg -g -O20 -D__NO_MATH_INLINES -fsigned-char -mv8" ;;
++                DEBUG="${CFLAGS} -g -Wall -D__NO_MATH_INLINES -fsigned-char -mv8"
++                CFLAGS="${CFLAGS} -O20 -ffast-math -D__NO_MATH_INLINES -fsigned-char -mv8"
++                PROFILE="${CFLAGS} -pg -g -O20 -D__NO_MATH_INLINES -fsigned-char -mv8" ;;
+         *)
+-                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char"
+-                CFLAGS="-O20 -D__NO_MATH_INLINES -fsigned-char"
+-                PROFILE="-O20 -g -pg -D__NO_MATH_INLINES -fsigned-char" ;;
++                DEBUG="${CFLAGS} -g -Wall -D__NO_MATH_INLINES -fsigned-char"
++                CFLAGS="${CFLAGS} -O20 -D__NO_MATH_INLINES -fsigned-char"
++                PROFILE="${CFLAGS} -O20 -g -pg -D__NO_MATH_INLINES -fsigned-char" ;;
+         esac
+ fi
+ 

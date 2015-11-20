@@ -1,0 +1,43 @@
+--- speech-tools/wrappers/perl5/Makefile~	2007-02-25 14:40:39.000000000 +0000
++++ speech-tools/wrappers/perl5/Makefile	2013-05-31 12:56:02.335074706 +0100
+@@ -82,7 +82,7 @@
+ 
+ # implicit build rules 
+ $(ALL_WRAPPERS) : %.so : %_wrap.o
+-	$(CXX) -shared $(LIBS) -o $@ $<
++	$(CXX) $(CXXFLAGS) -shared $(LIBS) -o $@ $<
+ 
+ .make_wrappers : $(ALL_WRAPPERS) 
+ 
+--- speech_tools/config/compilers/gcc_defaults.mak.orig	2013-05-31 13:56:45.005838473 +0100
++++ speech_tools/config/compilers/gcc_defaults.mak	2013-05-31 13:58:22.198180764 +0100
+@@ -48,7 +48,8 @@
+ COMPILER_VERSION_COMMAND=$(CXX) -v 2>&1 | tail -1 | sed -e 's/^....//'
+ 
+ CFLAGS  = $(GCC_SYSTEM_OPTIONS) $(CC_OTHER_FLAGS)
+-CXXFLAGS  =  $(GCC_SYSTEM_OPTIONS) -fno-implicit-templates $(CC_OTHER_FLAGS)
++CXXFLAGS  =  $(GCC_SYSTEM_OPTIONS) -fno-implicit-templates $(CXX_OTHER_FLAGS)
++LINKFLAGS  = $(GCC_SYSTEM_OPTIONS) $(LINK_OTHER_FLAGS)
+ 
+ DEBUG_CCFLAGS   = -g
+ DEBUG_CXXFLAGS  = -g
+@@ -81,7 +82,7 @@
+ SHARED_LINKFLAGS = 
+ 
+ ifndef GCC_MAKE_SHARED_LIB
+-    MAKE_SHARED_LIB = $(CXX) -shared -fno-shared-data -o XXX
++    MAKE_SHARED_LIB = $(CXX) $(CXXFLAGS) -shared -fno-shared-data -o XXX
+ else
+     MAKE_SHARED_LIB = $(GCC_MAKE_SHARED_LIB)
+ endif
+--- speech_tools/main/Makefile~	2005-08-02 19:57:27.000000000 +0100
++++ speech_tools/main/Makefile	2013-07-08 09:21:48.293145219 +0100
+@@ -94,7 +94,7 @@
+ 	$(CXX_COMMAND) -o $@ -DESTLIBDIR=\"$(EST_HOME)/lib\" $($*_SRC)
+ 
+ $(ALL_EXECS) : % : $(LIBDEPS) %_main.o 
+-	$(strip $(LINK_COMMAND) -o $@ $@_main.o $(LIBS) $($(@:=_LIBS)))
++	$(strip $(LINK_COMMAND) $(LINKFLAGS) -o $@ $@_main.o $(LIBS) $($(@:=_LIBS)))
+ 
+ .make_execs : $(ALL_EXECS) 
+ 
