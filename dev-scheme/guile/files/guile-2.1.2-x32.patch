@@ -1,0 +1,29 @@
+--- libguile/vm-i-scheme.c.orig	2014-09-13 21:07:50.326218883 +0100
++++ libguile/vm-i-scheme.c	2014-09-13 21:10:14.066351721 +0100
+@@ -256,11 +256,11 @@
+ 
+ # define ASM_ADD(x, y)							\
+     {									\
+-      asm volatile goto ("mov %1, %%"_CX"; "				\
++      asm volatile goto ("mov %q1, %%"_CX"; "				\
+ 			 "test %[tag], %%cl;   je %l[slow_add]; "	\
+ 			 "test %[tag], %0;     je %l[slow_add]; "	\
+ 			 "sub %[tag], %%"_CX"; "			\
+-			 "add %0, %%"_CX";     jo %l[slow_add]; "	\
++			 "add %q0, %%"_CX";     jo %l[slow_add]; "	\
+ 			 "mov %%"_CX", (%[vsp])\n"			\
+ 			 : /* no outputs */				\
+ 			 : "r" (x), "r" (y),				\
+@@ -274,10 +274,10 @@
+ 
+ # define ASM_SUB(x, y)							\
+     {									\
+-      asm volatile goto ("mov %0, %%"_CX"; "				\
++      asm volatile goto ("mov %q0, %%"_CX"; "				\
+ 			 "test %[tag], %%cl;   je %l[slow_sub]; "	\
+ 			 "test %[tag], %1;     je %l[slow_sub]; "	\
+-			 "sub %1, %%"_CX";     jo %l[slow_sub]; "	\
++			 "sub %q1, %%"_CX";     jo %l[slow_sub]; "	\
+ 			 "add %[tag], %%"_CX"; "			\
+ 			 "mov %%"_CX", (%[vsp])\n"			\
+ 			 : /* no outputs */				\
