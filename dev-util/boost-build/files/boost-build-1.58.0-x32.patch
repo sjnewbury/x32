@@ -1,0 +1,23 @@
+--- tools/gcc.py~	2016-02-27 23:37:10.000000000 +0000
++++ tools/gcc.py	2016-02-27 23:52:25.230154652 +0000
+@@ -160,7 +160,8 @@
+         lib_path = [os.path.join(root, 'bin'),
+                     os.path.join(root, 'lib'),
+                     os.path.join(root, 'lib32'),
+-                    os.path.join(root, 'lib64')]
++                    os.path.join(root, 'lib64'),
++                    os.path.join(root, 'libx32')]
+         if debug():
+             print 'notice: using gcc libraries ::', condition, '::', lib_path
+         toolset.flags('gcc.link', 'RUN_PATH', condition, lib_path)
+--- tools/gcc.jam~	2016-02-27 23:37:10.000000000 +0000
++++ tools/gcc.jam	2016-02-27 23:52:32.570185494 +0000
+@@ -216,7 +216,7 @@
+         # right onces. Note that we do not provide a clean way to build a 32-bit
+         # binary using a 64-bit compiler, but user can always pass -m32
+         # manually.
+-        local lib_path = $(root)/bin $(root)/lib $(root)/lib32 $(root)/lib64 ;
++        local lib_path = $(root)/bin $(root)/lib $(root)/lib32 $(root)/lib64 $(root)/libx32 ;
+         if $(.debug-configuration)
+         {
+             ECHO notice: using gcc libraries :: $(condition) :: $(lib_path) ;

@@ -1,0 +1,26 @@
+--- tools/gcc.jam~	2016-02-27 23:16:45.000000000 +0000
++++ tools/gcc.jam	2016-02-27 23:29:24.581019880 +0000
+@@ -448,23 +448,6 @@
+                 option = -mlp64 ;
+             }
+         }
+-        else
+-        {
+-            local arch = [ feature.get-values architecture : $(properties) ] ;
+-            if $(arch) != arm
+-            {
+-                if $(model) = 32
+-                {
+-                    option = -m32 ;
+-                }
+-                else if $(model) = 64
+-                {
+-                    option = -m64 ;
+-                }
+-            }
+-            # For darwin, the model can be 32_64. darwin.jam will handle that
+-            # on its own.
+-        }
+         OPTIONS on $(targets) += $(option) ;
+     }
+ }
