@@ -1,0 +1,20 @@
+--- libs/log/build/Jamfile.v2~	2015-04-04 18:33:00.000000000 +0100
++++ libs/log/build/Jamfile.v2	2016-02-25 22:50:32.871359855 +0000
+@@ -249,7 +249,7 @@
+             result = ;
+             if <toolset>gcc in $(properties) || <toolset>clang in $(properties)
+             {
+-                result = <cxxflags>"-march=core2 -msse -msse2 -msse3 -mssse3" ;
++                result = <cxxflags>"-msse -msse2 -msse3 -mssse3" ;
+             }
+             else if <toolset>intel in $(properties)
+             {
+@@ -311,7 +311,7 @@
+             result = ;
+             if <toolset>gcc in $(properties)
+             {
+-                result = <cxxflags>"-march=core-avx2 -mavx -mavx2 -fabi-version=0" ;
++                result = <cxxflags>"-mavx -mavx2 -fabi-version=0" ;
+             }
+             else if <toolset>clang in $(properties)
+             {

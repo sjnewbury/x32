@@ -1,0 +1,153 @@
+# ChangeLog for dev-libs/boost
+# Copyright 1999-2016 Gentoo Foundation; Distributed under the GPL v2
+# (auto-generated from git log)
+
+*boost-1.58.0-r1 (09 Aug 2015)
+*boost-1.57.0 (09 Aug 2015)
+*boost-1.56.0-r1 (09 Aug 2015)
+*boost-1.55.0-r2 (09 Aug 2015)
+*boost-1.54.0-r1 (09 Aug 2015)
+*boost-1.53.0-r1 (09 Aug 2015)
+*boost-1.52.0-r7 (09 Aug 2015)
+
+  09 Aug 2015; Robin H. Johnson <robbat2@gentoo.org> +boost-1.52.0-r7.ebuild,
+  +boost-1.53.0-r1.ebuild, +boost-1.54.0-r1.ebuild, +boost-1.55.0-r2.ebuild,
+  +boost-1.56.0-r1.ebuild, +boost-1.57.0.ebuild, +boost-1.58.0-r1.ebuild,
+  +files/boost-1.48.0-disable_icu_rpath.patch,
+  +files/boost-1.48.0-disable_libboost_python3.patch,
+  +files/boost-1.48.0-mpi_python3.patch,
+  +files/boost-1.48.0-no_strict_aliasing_python2.patch,
+  +files/boost-1.48.0-python_linking.patch,
+  +files/boost-1.51.0-respect_python-buildid.patch,
+  +files/boost-1.51.0-support_dots_in_python-buildid.patch,
+  +files/boost-1.52.0-locale-utf.patch, +files/boost-1.52.0-threads.patch,
+  +files/boost-1.52.0-tuple.patch,
+  +files/boost-1.53.0-glibc-2.18-compat.patch,
+  +files/boost-1.53.0-library_status.patch,
+  +files/boost-1.55.0-context-x32.patch,
+  +files/boost-1.55.0-tools-c98-compat.patch,
+  +files/boost-1.55.0-variadic-templates.patch,
+  +files/boost-1.56.0-build-auto_index-tool.patch,
+  +files/boost-1.58.0-fix-non-constexpr-types-regression.patch,
+  +files/remove-toolset-1.48.0.patch, +metadata.xml:
+  proj/gentoo: Initial commit
+
+  This commit represents a new era for Gentoo:
+  Storing the gentoo-x86 tree in Git, as converted from CVS.
+
+  This commit is the start of the NEW history.
+  Any historical data is intended to be grafted onto this point.
+
+  Creation process:
+  1. Take final CVS checkout snapshot
+  2. Remove ALL ChangeLog* files
+  3. Transform all Manifests to thin
+  4. Remove empty Manifests
+  5. Convert all stale $Header$/$Id$ CVS keywords to non-expanded Git $Id$
+  5.1. Do not touch files with -kb/-ko keyword flags.
+
+  Signed-off-by: Robin H. Johnson <robbat2@gentoo.org>
+  X-Thanks: Alec Warner <antarus@gentoo.org> - did the GSoC 2006 migration
+  tests
+  X-Thanks: Robin H. Johnson <robbat2@gentoo.org> - infra guy, herding this
+  project
+  X-Thanks: Nguyen Thai Ngoc Duy <pclouds@gentoo.org> - Former Gentoo
+  developer, wrote Git features for the migration
+  X-Thanks: Brian Harring <ferringb@gentoo.org> - wrote much python to improve
+  cvs2svn
+  X-Thanks: Rich Freeman <rich0@gentoo.org> - validation scripts
+  X-Thanks: Patrick Lauer <patrick@gentoo.org> - Gentoo dev, running new 2014
+  work in migration
+  X-Thanks: Michał Górny <mgorny@gentoo.org> - scripts, QA, nagging
+  X-Thanks: All of other Gentoo developers - many ideas and lots of paint on
+  the bikeshed
+
+  24 Aug 2015; Justin Lecher <jlec@gentoo.org> metadata.xml:
+  Use https by default
+
+  Convert all URLs for sites supporting encrypted connections from http to
+  https
+
+  Signed-off-by: Justin Lecher <jlec@gentoo.org>
+
+  24 Aug 2015; Mike Gilbert <floppym@gentoo.org> metadata.xml:
+  Revert DOCTYPE SYSTEM https changes in metadata.xml
+
+  repoman does not yet accept the https version.
+  This partially reverts eaaface92ee81f30a6ac66fe7acbcc42c00dc450.
+
+  Bug: https://bugs.gentoo.org/552720
+
+  25 Aug 2015; Sergey Popov <pinkbyte@gentoo.org> boost-1.56.0-r1.ebuild,
+  +files/boost-1.56.0-atomic.patch:
+  backport build fixes for Boost::Atomic
+
+  Backport build fixes for atomic ops support on some ARM devices
+  Upstream bugreport - https://svn.boost.org/trac/boost/ticket/10446
+
+  Gentoo-Bug: 557168
+  Reported-by: Daniel Savard <dsavard@cids.ca>
+  Gentoo-Bug: 558042
+  Reported-by: Michael Jones <gentoo@jonesmz.com>
+
+  Package-Manager: portage-2.2.20
+
+  11 Nov 2015; Michał Górny <mgorny@gentoo.org> boost-1.57.0.ebuild,
+  boost-1.58.0-r1.ebuild:
+  Work-around library rename due to ABIFLAGS
+
+  Create a compatibility symlink to work-around Boost linking failures
+  when Python library name contains ABIFLAGS. A proper fix would be
+  preferable but the build system is convoluted and buggy, so a
+  work-around is put in place instead.
+
+  13 Dec 2015; Justin Lecher <jlec@gentoo.org> boost-1.56.0-r1.ebuild:
+  Backport fix for python ABI letters
+
+  Package-Manager: portage-2.2.26
+  Signed-off-by: Justin Lecher <jlec@gentoo.org>
+
+  22 Dec 2015; Ian Delaney <idella4@gentoo.org> boost-1.57.0.ebuild:
+  add py3.5 support to vn. 1.57.0
+
+  Package-Manager: portage-2.2.24
+
+  20 Jan 2016; Sergey Popov <pinkbyte@gentoo.org> boost-1.58.0-r1.ebuild:
+  add support for Python 3.5
+
+  Package-Manager: portage-2.2.26
+
+*boost-1.59.0 (20 Jan 2016)
+
+  20 Jan 2016; Sergey Popov <pinkbyte@gentoo.org> +boost-1.59.0.ebuild:
+  version bump, port to EAPI 6
+
+  Gentoo-Bug: 558794
+
+  Package-Manager: portage-2.2.26
+
+  24 Jan 2016; Michał Górny <mgorny@gentoo.org> metadata.xml:
+  Replace all herds with appropriate projects (GLEP 67)
+
+  Replace all uses of herd with appropriate project maintainers, or no
+  maintainers in case of herds requested to be disbanded.
+
+  24 Jan 2016; Michał Górny <mgorny@gentoo.org> metadata.xml:
+  Set appropriate maintainer types in metadata.xml (GLEP 67)
+
+  27 Jan 2016; Sergey Popov <pinkbyte@gentoo.org> -boost-1.52.0-r7.ebuild,
+  -boost-1.53.0-r1.ebuild, -boost-1.54.0-r1.ebuild,
+  -files/boost-1.48.0-mpi_python3.patch, -files/boost-1.52.0-locale-utf.patch,
+  -files/boost-1.52.0-tuple.patch,
+  -files/boost-1.53.0-glibc-2.18-compat.patch,
+  -files/boost-1.53.0-library_status.patch,
+  -files/remove-toolset-1.48.0.patch:
+  drop old masked versions
+
+  Package-Manager: portage-2.2.26
+
+  06 Feb 2016; Davide Pesavento <pesa@gentoo.org> metadata.xml:
+  fix two typos in metadata.xml
+
+  Package-Manager: portage-2.2.27
+
