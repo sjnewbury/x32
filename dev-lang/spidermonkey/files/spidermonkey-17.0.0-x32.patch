@@ -1,0 +1,624 @@
+diff -urN mozjs17.orig/js/src/assembler/assembler/MacroAssemblerX86_64.h mozjs17/js/src/assembler/assembler/MacroAssemblerX86_64.h
+--- mozjs17.orig/js/src/assembler/assembler/MacroAssemblerX86_64.h	2013-02-11 22:33:22.000000000 +0000
++++ mozjs17/js/src/assembler/assembler/MacroAssemblerX86_64.h	2013-03-17 12:16:16.143101832 +0000
+@@ -44,8 +44,13 @@
+ 
+ class MacroAssemblerX86_64 : public MacroAssemblerX86Common {
+ protected:
++#ifdef __ILP32__
++    static const intptr_t MinInt32 = 0x80000000;
++    static const intptr_t MaxInt32 = 0x7FFFFFFF;
++#else
+     static const intptr_t MinInt32 = 0xFFFFFFFF80000000;
+     static const intptr_t MaxInt32 = 0x000000007FFFFFFF;
++#endif
+ 
+ public:
+     static const Scale ScalePtr = TimesEight;
+diff -urN mozjs17.orig/js/src/configure mozjs17/js/src/configure
+--- mozjs17.orig/js/src/configure	2013-03-17 18:02:26.981236641 +0000
++++ mozjs17/js/src/configure	2013-03-17 13:15:26.015556865 +0000
+@@ -8191,7 +8191,7 @@
+ EOF
+ 
+     ;;
+-x86_64*-*)
++x86_64*-*gnu | x86_64*-*solaris* | x86_64*-*mks | x86_64*-*bsd )
+     ENABLE_METHODJIT=1
+     ENABLE_MONOIC=1
+     ENABLE_POLYIC=1
+@@ -8211,6 +8211,26 @@
+ EOF
+ 
+     ;;
++x86_64*-*x32)
++    ENABLE_METHODJIT=1
++    ENABLE_MONOIC=1
++    ENABLE_POLYIC=1
++    ENABLE_METHODJIT_TYPED_ARRAY=1
++    cat >> confdefs.pytmp <<\EOF
++        (''' JS_CPU_X32 ''', ' 1 ')
++EOF
++cat >> confdefs.h <<\EOF
++#define JS_CPU_X32 1
++EOF
++
++    cat >> confdefs.pytmp <<\EOF
++        (''' JS_NUNBOX32 ''', ' 1 ')
++EOF
++cat >> confdefs.h <<\EOF
++#define JS_NUNBOX32 1
++EOF
++
++    ;;
+ arm*-*)
+     ENABLE_METHODJIT=1
+     ENABLE_MONOIC=1
+diff -urN mozjs17.orig/js/src/configure.in mozjs17/js/src/configure.in
+--- mozjs17.orig/js/src/configure.in	2013-03-05 01:15:01.000000000 +0000
++++ mozjs17/js/src/configure.in	2013-03-17 13:13:11.989432291 +0000
+@@ -2215,7 +2215,7 @@
+     AC_DEFINE(JS_CPU_X86)
+     AC_DEFINE(JS_NUNBOX32)
+     ;;
+-x86_64*-*)
++x86_64*-*gnu | x86_64*-*solaris* | x86_64*-*mks | x86_64*-*bsd )
+     ENABLE_METHODJIT=1
+     ENABLE_MONOIC=1
+     ENABLE_POLYIC=1
+@@ -2223,6 +2223,14 @@
+     AC_DEFINE(JS_CPU_X64)
+     AC_DEFINE(JS_PUNBOX64)
+     ;;
++x86_64*-*x32)
++    ENABLE_METHODJIT=1
++    ENABLE_MONOIC=1
++    ENABLE_POLYIC=1
++    ENABLE_METHODJIT_TYPED_ARRAY=1
++    AC_DEFINE(JS_CPU_X32)
++    AC_DEFINE(JS_NUNBOX32)
++    ;;
+ arm*-*)
+     ENABLE_METHODJIT=1
+     ENABLE_MONOIC=1
+diff -urN mozjs17.orig/js/src/jstypes.h mozjs17/js/src/jstypes.h
+--- mozjs17.orig/js/src/jstypes.h	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/jstypes.h	2013-03-17 12:53:22.783639023 +0000
+@@ -160,7 +160,7 @@
+ # endif
+ #elif defined(__GNUC__)
+ /* Additional GCC defines are when running on Solaris, AIX, and HPUX */
+-# if defined(__x86_64__) || defined(__sparcv9) || \
++# if ( defined(__x86_64__) && ! defined(__ILP32__) ) || defined(__sparcv9) || \
+         defined(__64BIT__) || defined(__LP64__)
+ #  define JS_64BIT
+ # endif
+diff -urN mozjs17.orig/js/src/methodjit/BaseAssembler.h mozjs17/js/src/methodjit/BaseAssembler.h
+--- mozjs17.orig/js/src/methodjit/BaseAssembler.h	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/methodjit/BaseAssembler.h	2013-03-17 13:44:26.892176803 +0000
+@@ -263,7 +263,7 @@
+     }
+ 
+     /* Register pair storing returned type/data for calls. */
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+ static const JSC::MacroAssembler::RegisterID JSReturnReg_Type  = JSC::X86Registers::edi;
+ static const JSC::MacroAssembler::RegisterID JSReturnReg_Data  = JSC::X86Registers::esi;
+ static const JSC::MacroAssembler::RegisterID JSParamReg_Argc   = JSC::X86Registers::ecx;
+@@ -384,7 +384,7 @@
+ 
+     void negateDouble(FPRegisterID fpreg)
+     {
+-#if defined JS_CPU_X86 || defined JS_CPU_X64
++#if defined JS_CPU_X86 || defined JS_CPU_X64 || defined(JS_CPU_X32)
+         static const uint64_t DoubleNegMask = 0x8000000000000000ULL;
+         loadDouble(&DoubleNegMask, Registers::FPConversionTemp);
+         xorDouble(Registers::FPConversionTemp, fpreg);
+@@ -477,7 +477,7 @@
+ #endif
+ 
+     static inline uint32_t alignForCall(uint32_t stackBytes) {
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_MIPS)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32) || defined(JS_CPU_MIPS)
+         // If StackAlignment is a power of two, % is just two shifts.
+         // 16 - (x % 16) gives alignment, extra % 16 handles total == 0.
+         return align(stackBytes, StackAlignment);
+diff -urN mozjs17.orig/js/src/methodjit/FastArithmetic.cpp mozjs17/js/src/methodjit/FastArithmetic.cpp
+--- mozjs17.orig/js/src/methodjit/FastArithmetic.cpp	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/methodjit/FastArithmetic.cpp	2013-03-17 14:01:07.782136823 +0000
+@@ -901,7 +901,7 @@
+ bool
+ mjit::Compiler::jsop_mod()
+ {
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     JSValueType type = knownPushedType(0);
+     FrameEntry *lhs = frame.peek(-2);
+     FrameEntry *rhs = frame.peek(-1);
+@@ -931,7 +931,7 @@
+         return true;
+     }
+ 
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     if (!lhs->isTypeKnown()) {
+         Jump j = frame.testInt32(Assembler::NotEqual, lhs);
+         stubcc.linkExit(j, Uses(2));
+diff -urN mozjs17.orig/js/src/methodjit/FastOps.cpp mozjs17/js/src/methodjit/FastOps.cpp
+--- mozjs17.orig/js/src/methodjit/FastOps.cpp	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/methodjit/FastOps.cpp	2013-03-17 13:59:21.044257715 +0000
+@@ -303,7 +303,7 @@
+             stubcc.rejoin(Changes(1));
+             return;
+         }
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+         /* Grosssssss! RHS _must_ be in ECX, on x86 */
+         RegisterID rr = frame.tempRegInMaskForData(rhs,
+                                                    Registers::maskReg(JSC::X86Registers::ecx)).reg();
+diff -urN mozjs17.orig/js/src/methodjit/ICRepatcher.h mozjs17/js/src/methodjit/ICRepatcher.h
+--- mozjs17.orig/js/src/methodjit/ICRepatcher.h	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/methodjit/ICRepatcher.h	2013-03-17 13:42:42.126425489 +0000
+@@ -37,7 +37,7 @@
+ 
+     /* Patch a stub call. */
+     void relink(CodeLocationCall call, FunctionPtr stub) {
+-#if defined JS_CPU_X64 || defined JS_CPU_X86 || defined JS_CPU_SPARC
++#if defined JS_CPU_X64 || defined JS_CPU_X32 || defined JS_CPU_X86 || defined JS_CPU_SPARC
+         JSC::RepatchBuffer::relink(call, stub);
+ #elif defined JS_CPU_ARM
+         /*
+@@ -77,7 +77,7 @@
+ 
+     /* Patch the offset of a Value load emitted by loadValueWithAddressOffsetPatch. */
+     void patchAddressOffsetForValueLoad(CodeLocationLabel label, uint32_t offset) {
+-#if defined JS_CPU_X64 || defined JS_CPU_ARM || defined JS_CPU_SPARC || defined JS_CPU_MIPS
++#if defined JS_CPU_X64 || defined JS_CPU_X32 || defined JS_CPU_ARM || defined JS_CPU_SPARC || defined JS_CPU_MIPS
+         repatch(label.dataLabel32AtOffset(0), offset);
+ #elif defined JS_CPU_X86
+         static const unsigned LOAD_TYPE_OFFSET = 6;
+@@ -97,7 +97,7 @@
+     }
+ 
+     void patchAddressOffsetForValueStore(CodeLocationLabel label, uint32_t offset, bool typeConst) {
+-#if defined JS_CPU_ARM || defined JS_CPU_X64 || defined JS_CPU_SPARC || defined JS_CPU_MIPS
++#if defined JS_CPU_ARM || defined JS_CPU_X64 || defined JS_CPU_X32 || defined JS_CPU_SPARC || defined JS_CPU_MIPS
+         (void) typeConst;
+         repatch(label.dataLabel32AtOffset(0), offset);
+ #elif defined JS_CPU_X86
+diff -urN mozjs17.orig/js/src/methodjit/MachineRegs.h mozjs17/js/src/methodjit/MachineRegs.h
+--- mozjs17.orig/js/src/methodjit/MachineRegs.h	2013-02-11 22:33:23.000000000 +0000
++++ mozjs17/js/src/methodjit/MachineRegs.h	2013-03-17 13:39:48.771135772 +0000
+@@ -74,7 +74,7 @@
+     typedef JSC::MacroAssembler::RegisterID RegisterID;
+ 
+     // Homed and scratch registers for working with Values on x64.
+-#if defined(JS_CPU_X64)
++#if defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const RegisterID TypeMaskReg = JSC::X86Registers::r13;
+     static const RegisterID PayloadMaskReg = JSC::X86Registers::r14;
+     static const RegisterID ValueReg = JSC::X86Registers::r10;
+@@ -84,7 +84,7 @@
+     // Register that homes the current JSStackFrame.
+ #if defined(JS_CPU_X86)
+     static const RegisterID JSFrameReg = JSC::X86Registers::ebp;
+-#elif defined(JS_CPU_X64)
++#elif defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const RegisterID JSFrameReg = JSC::X86Registers::ebx;
+ #elif defined(JS_CPU_ARM)
+     static const RegisterID JSFrameReg = JSC::ARMRegisters::r10;
+@@ -94,12 +94,12 @@
+     static const RegisterID JSFrameReg = JSC::MIPSRegisters::s0;
+ #endif
+ 
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const RegisterID ReturnReg = JSC::X86Registers::eax;
+ # if defined(JS_CPU_X86) || defined(_WIN64)
+     static const RegisterID ArgReg0 = JSC::X86Registers::ecx;
+     static const RegisterID ArgReg1 = JSC::X86Registers::edx;
+-#  if defined(JS_CPU_X64)
++#  if defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const RegisterID ArgReg2 = JSC::X86Registers::r8;
+     static const RegisterID ArgReg3 = JSC::X86Registers::r9;
+ #  endif
+@@ -144,7 +144,7 @@
+         return maskReg(reg1) | maskReg(reg2) | maskReg(reg3);
+     }
+ 
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const uint32_t TempRegs =
+           (1 << JSC::X86Registers::eax)
+ # if defined(JS_CPU_X86)
+@@ -152,7 +152,7 @@
+ # endif
+         | (1 << JSC::X86Registers::ecx)
+         | (1 << JSC::X86Registers::edx)
+-# if defined(JS_CPU_X64)
++# if defined(JS_CPU_X64) || defined(JS_CPU_X32)
+         | (1 << JSC::X86Registers::r8)
+         | (1 << JSC::X86Registers::r9)
+ #  if !defined(_WIN64)
+@@ -162,7 +162,7 @@
+ # endif
+         ;
+ 
+-# if defined(JS_CPU_X64)
++# if defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const uint32_t SavedRegs =
+         /* r11 is scratchRegister, used by JSC. */
+           (1 << JSC::X86Registers::r12)
+@@ -186,7 +186,7 @@
+           (1 << JSC::X86Registers::edi) |
+           (1 << JSC::X86Registers::ebp) |
+           (1 << JSC::X86Registers::esp));
+-# elif defined(JS_CPU_X64)
++# elif defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const uint32_t SingleByteRegs = TempRegs | SavedRegs;
+ # endif
+ 
+@@ -280,7 +280,7 @@
+ # else
+         return (convention == FastCall) ? 2 : 0;
+ # endif
+-#elif defined(JS_CPU_X64)
++#elif defined(JS_CPU_X64) || defined(JS_CPU_X32)
+ # ifdef _WIN64
+         return 4;
+ # else
+@@ -308,7 +308,7 @@
+         if (conv == NormalCall)
+             return false;
+ # endif
+-#elif defined(JS_CPU_X64)
++#elif defined(JS_CPU_X64) || defined(JS_CPU_X32)
+ # ifdef _WIN64
+         static const RegisterID regs[] = {
+             JSC::X86Registers::ecx,
+@@ -361,7 +361,7 @@
+ 
+     typedef JSC::MacroAssembler::FPRegisterID FPRegisterID;
+ 
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+ #ifdef _WIN64
+     /* xmm0-xmm5 are scratch register on Win64 ABI */
+     static const uint32_t TotalFPRegisters = 5;
+@@ -416,7 +416,7 @@
+ #endif
+ 
+     /* Temp reg that can be clobbered when setting up a fallible fast or ABI call. */
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     static const RegisterID ClobberInCall = JSC::X86Registers::ecx;
+ #elif defined(JS_CPU_ARM)
+     static const RegisterID ClobberInCall = JSC::ARMRegisters::r2;
+@@ -457,7 +457,7 @@
+         regs.takeReg(ArgReg0);
+         regs.takeReg(ArgReg1);
+         regs.takeReg(ArgReg2);
+-#if defined(JS_CPU_SPARC) || defined(JS_CPU_X64)
++#if defined(JS_CPU_SPARC) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+         regs.takeReg(ArgReg3);
+ #endif
+ #endif
+@@ -573,7 +573,7 @@
+ const char *
+ AnyRegisterID::name()
+ {
+-#if defined(JS_CPU_X86) || defined(JS_CPU_X64)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     return isReg() ? JSC::X86Registers::nameIReg(reg()) : JSC::X86Registers::nameFPReg(fpreg());
+ #elif defined(JS_CPU_ARM)
+     return isReg() ? JSC::ARMAssembler::nameGpReg(reg()) : JSC::ARMAssembler::nameFpRegD(fpreg());
+--- mozjs17/js/src/methodjit/MethodJIT.h.orig	2013-03-18 22:00:15.185127935 +0000
++++ mozjs17/js/src/methodjit/MethodJIT.h	2013-03-18 22:00:20.441021642 +0000
+@@ -19,6 +19,7 @@
+ #include "assembler/assembler/CodeLocation.h"
+ 
+ #if !defined JS_CPU_X64 && \
++    !defined JS_CPU_X32 && \
+     !defined JS_CPU_X86 && \
+     !defined JS_CPU_SPARC && \
+     !defined JS_CPU_ARM && \
+@@ -139,7 +140,7 @@
+     /* The gap between ebp and esp in JaegerTrampoline frames on X86 platforms. */
+     static const uint32_t STACK_BASE_DIFFERENCE = 0x38;
+ 
+-#elif defined(JS_CPU_X64)
++#elif defined(JS_CPU_X64) || defined(JS_CPU_X32)
+     void *savedRBX;
+ # ifdef _WIN64
+     void *savedRSI;
+--- mozjs17/js/src/methodjit/MethodJIT.cpp.orig	2013-03-18 21:59:56.994495812 +0000
++++ mozjs17/js/src/methodjit/MethodJIT.cpp	2013-03-18 23:01:20.054586418 +0000
+@@ -47,10 +47,11 @@
+ StackFrame::methodjitStaticAsserts()
+ {
+         /* Static assert for x86 trampolines in MethodJIT.cpp. */
+-#if defined(JS_CPU_X86)
++#if defined(JS_CPU_X86) || defined(JS_CPU_X32)
+         JS_STATIC_ASSERT(offsetof(StackFrame, rval_)     == 0x18);
+         JS_STATIC_ASSERT(offsetof(StackFrame, rval_) + 4 == 0x1C);
+         JS_STATIC_ASSERT(offsetof(StackFrame, ncode_)    == 0x14);
++#elif defined(JS_CPU_ARM)
+         /* ARM uses decimal literals. */
+         JS_STATIC_ASSERT(offsetof(StackFrame, rval_)     == 24);
+         JS_STATIC_ASSERT(offsetof(StackFrame, rval_) + 4 == 28);
+@@ -135,7 +136,8 @@
+ 
+ JS_STATIC_ASSERT(offsetof(FrameRegs, sp) == 0);
+ 
+-#if defined(__linux__) && defined(JS_CPU_X64)
++#if defined(__linux__) && ( defined(JS_CPU_X64) || defined(JS_CPU_X32) )
++
+ # define SYMBOL_STRING_RELOC(name) #name "@plt"
+ #else
+ # define SYMBOL_STRING_RELOC(name) SYMBOL_STRING(name)
+@@ -427,6 +429,198 @@
+     "jmp " SYMBOL_STRING_RELOC(JaegerInterpoline)   "\n"
+     CFI(".cfi_endproc"                              "\n")
+ );
++
++# elif defined(JS_CPU_X32)
++
++/*
++ *    *** DANGER ***
++ * If these assertions break, update the constants below.
++ *    *** DANGER ***
++ */
++JS_STATIC_ASSERT(offsetof(VMFrame, savedRBX) == 0x34);
++JS_STATIC_ASSERT(offsetof(VMFrame, scratch) == 0xC);
++JS_STATIC_ASSERT(VMFrame::offsetOfFp == 0x1C);
++
++asm (
++".text\n"
++".globl " SYMBOL_STRING(JaegerTrampoline) "\n"
++SYMBOL_STRING(JaegerTrampoline) ":"       "\n"
++    /* Prologue. */
++    CFI(".cfi_startproc"                 "\n")
++    CFI(".cfi_def_cfa rsp, 8"            "\n")
++    "pushq %rbp"                         "\n"
++    CFI(".cfi_def_cfa_offset 16"         "\n")
++    CFI(".cfi_offset rbp, -16"           "\n")
++    "movq %rsp, %rbp"                    "\n"
++    CFI(".cfi_def_cfa_register rbp"      "\n")
++    /* Save non-volatile registers. */
++    "pushq %r12"                         "\n"
++    CFI(".cfi_offset r12, -24"           "\n")
++    "pushq %r13"                         "\n"
++    CFI(".cfi_offset r13, -32"           "\n")
++    "pushq %r14"                         "\n"
++    CFI(".cfi_offset r14, -40"           "\n")
++    "pushq %r15"                         "\n"
++    CFI(".cfi_offset r15, -48"           "\n")
++    "pushq %rbx"                         "\n"
++    CFI(".cfi_offset rbx, -56"           "\n")
++
++    /* Build the JIT frame.
++     * rdi = cx
++     * rsi = fp
++     * rcx = inlineCallCount
++     * fp must go into rbx
++     */
++    "pushq $0x0"                         "\n" /* stubRejoin */
++    "pushq %rsi"                         "\n" /* entryncode */
++    "pushq %rsi"                         "\n" /* entryfp */
++    "pushq %rcx"                         "\n" /* inlineCallCount */
++    "pushq %rdi"                         "\n" /* cx */
++    "pushq %rsi"                         "\n" /* fp */
++    "movq  %rsi, %rbx"                   "\n"
++
++    /* Space for the rest of the VMFrame. */
++    "subq  $0x28, %rsp"                  "\n"
++
++    /* This is actually part of the VMFrame. */
++    "pushq %r8"                          "\n"
++
++    /* Set cx->regs and set the active frame. Save rdx and align frame in one. */
++    "pushq %rdx"                         "\n"
++    "movq  %rsp, %rdi"                   "\n"
++    "call " SYMBOL_STRING_VMFRAME(PushActiveVMFrame) "\n"
++
++    /* Jump into the JIT'd code. */
++    "jmp *0(%rsp)"                      "\n"
++    CFI(".cfi_endproc"                  "\n")
++);
++
++asm (
++".text\n"
++    /* See "Special rules for JaegerThrowpoline and friends", above. */
++    CFI(".cfi_startproc"                 "\n")
++    CFI(".cfi_def_cfa rbp, 16"           "\n")
++    CFI(".cfi_offset rbp, -16"           "\n")
++    CFI(".cfi_offset r12, -24"           "\n")
++    CFI(".cfi_offset r13, -32"           "\n")
++    CFI(".cfi_offset r14, -40"           "\n")
++    CFI(".cfi_offset r15, -48"           "\n")
++    CFI(".cfi_offset rbx, -56"           "\n")
++    CFI("nop"                            "\n")
++".globl " SYMBOL_STRING(JaegerTrampolineReturn) "\n"
++SYMBOL_STRING(JaegerTrampolineReturn) ":"       "\n"
++    "or   %rdi, %rsi"                    "\n"
++    "movq %rsi, 0x30(%rbx)"              "\n"
++    "movq %rsp, %rdi"                    "\n"
++    "call " SYMBOL_STRING_VMFRAME(PopActiveVMFrame) "\n"
++
++    "addq $0x34, %rsp"                   "\n"
++    "popq %rbx"                          "\n"
++    "popq %r15"                          "\n"
++    "popq %r14"                          "\n"
++    "popq %r13"                          "\n"
++    "popq %r12"                          "\n"
++    "popq %rbp"                          "\n"
++    CFI(".cfi_def_cfa rsp, 8"            "\n")
++    "movq $1, %rax"                      "\n"
++    "ret"                                "\n"
++    CFI(".cfi_endproc"                   "\n")
++);
++
++asm (
++".text\n"
++    /* See "Special rules for JaegerThrowpoline and friends", above. */
++    CFI(".cfi_startproc"                    "\n")
++    CFI(".cfi_def_cfa rbp, 16"              "\n")
++    CFI(".cfi_offset rbp, -16"              "\n")
++    CFI(".cfi_offset r12, -24"              "\n")
++    CFI(".cfi_offset r13, -32"              "\n")
++    CFI(".cfi_offset r14, -40"              "\n")
++    CFI(".cfi_offset r15, -48"              "\n")
++    CFI(".cfi_offset rbx, -56"              "\n")
++    CFI("nop"                               "\n")
++".globl " SYMBOL_STRING(JaegerThrowpoline)  "\n"
++SYMBOL_STRING(JaegerThrowpoline) ":"        "\n"
++    "movq %rsp, %rdi"                       "\n"
++    "call " SYMBOL_STRING_RELOC(js_InternalThrow) "\n"
++    "testq %rax, %rax"                      "\n"
++    "je   throwpoline_exit"                 "\n"
++    "jmp  *%rax"                            "\n"
++  "throwpoline_exit:"                       "\n"
++    "movq %rsp, %rdi"                       "\n"
++    "call " SYMBOL_STRING_VMFRAME(PopActiveVMFrame) "\n"
++    "addq $0x34, %rsp"                      "\n"
++    "popq %rbx"                             "\n"
++    "popq %r15"                             "\n"
++    "popq %r14"                             "\n"
++    "popq %r13"                             "\n"
++    "popq %r12"                             "\n"
++    "popq %rbp"                             "\n"
++    CFI(".cfi_def_cfa rsp, 8"               "\n")
++    "xorq %rax,%rax"                        "\n"
++    "ret"                                   "\n"
++    CFI(".cfi_endproc"                      "\n")
++);
++
++asm (
++".text\n"
++    /* See "Special rules for JaegerThrowpoline and friends", above. */
++    CFI(".cfi_startproc"                    "\n")
++    CFI(".cfi_def_cfa rbp, 16"              "\n")
++    CFI(".cfi_offset rbp, -16"              "\n")
++    CFI(".cfi_offset r12, -24"              "\n")
++    CFI(".cfi_offset r13, -32"              "\n")
++    CFI(".cfi_offset r14, -40"              "\n")
++    CFI(".cfi_offset r15, -48"              "\n")
++    CFI(".cfi_offset rbx, -56"              "\n")
++    CFI("nop"                               "\n")
++".globl " SYMBOL_STRING(JaegerInterpoline)  "\n"
++SYMBOL_STRING(JaegerInterpoline) ":"        "\n"
++    "movq %rsp, %rcx"                       "\n"
++    "movq %rax, %rdx"                       "\n"
++    "call " SYMBOL_STRING_RELOC(js_InternalInterpret) "\n"
++    "movq 0x1C(%rsp), %rbx"                 "\n" /* Load frame */
++    "movq 0x30(%rbx), %rsi"                 "\n" /* Load rval payload */
++    "movq 0x30(%rbx), %rdi"                 "\n" /* Load rval type */
++    "movq 0xC(%rsp), %rcx"                 "\n" /* Load scratch -> argc */
++    "testq %rax, %rax"                      "\n"
++    "je   interpoline_exit"                 "\n"
++    "jmp  *%rax"                            "\n"
++  "interpoline_exit:"                       "\n"
++    "movq %rsp, %rdi"                       "\n"
++    "call " SYMBOL_STRING_VMFRAME(PopActiveVMFrame) "\n"
++    "addq $0x34, %rsp"                      "\n"
++    "popq %rbx"                             "\n"
++    "popq %r15"                             "\n"
++    "popq %r14"                             "\n"
++    "popq %r13"                             "\n"
++    "popq %r12"                             "\n"
++    "popq %rbp"                             "\n"
++    CFI(".cfi_def_cfa rsp, 8"               "\n")
++    "xorq %rax,%rax"                        "\n"
++    "ret"                                   "\n"
++    CFI(".cfi_endproc"                      "\n")
++);
++
++asm (
++".text\n"
++    /* See "Special rules for JaegerThrowpoline and friends", above. */
++    CFI(".cfi_startproc"                            "\n")
++    CFI(".cfi_def_cfa rbp, 16"                      "\n")
++    CFI(".cfi_offset rbp, -16"                      "\n")
++    CFI(".cfi_offset r12, -24"                      "\n")
++    CFI(".cfi_offset r13, -32"                      "\n")
++    CFI(".cfi_offset r14, -40"                      "\n")
++    CFI(".cfi_offset r15, -48"                      "\n")
++    CFI(".cfi_offset rbx, -56"                      "\n")
++    CFI("nop"                                       "\n")
++".globl " SYMBOL_STRING(JaegerInterpolineScripted)  "\n"
++SYMBOL_STRING(JaegerInterpolineScripted) ":"        "\n"
++    "movq 0x20(%rbx), %rbx"                         "\n" /* load prev */
++    "movq %rbx, 0x1C(%rsp)"                         "\n"
++    "jmp " SYMBOL_STRING_RELOC(JaegerInterpoline)   "\n"
++    CFI(".cfi_endproc"                              "\n")
++);
+ 
+ # elif defined(JS_CPU_X86)
+ 
+--- mozjs17/js/src/methodjit/NunboxAssembler.h.orig	2013-03-19 00:20:43.241626554 +0000
++++ mozjs17/js/src/methodjit/NunboxAssembler.h	2013-03-19 00:17:32.451427829 +0000
+@@ -153,7 +153,7 @@
+         JS_ASSERT(address.base != treg); /* treg is clobbered first. */
+ 
+         Label start = label();
+-#if defined JS_CPU_X86
++#if defined JS_CPU_X86 || defined JS_CPU_X32
+         /*
+          * On x86 there are two loads to patch and they both encode the offset
+          * in-line.
+@@ -191,7 +191,7 @@
+      */
+     DataLabel32 storeValueWithAddressOffsetPatch(RegisterID treg, RegisterID dreg, Address address) {
+         DataLabel32 start = dataLabel32();
+-#if defined JS_CPU_X86
++#if defined JS_CPU_X86 || defined JS_CPU_X32
+         /*
+          * On x86 there are two stores to patch and they both encode the offset
+          * in-line.
+@@ -217,7 +217,7 @@
+     /* Overloaded for storing a constant type. */
+     DataLabel32 storeValueWithAddressOffsetPatch(ImmType type, RegisterID dreg, Address address) {
+         DataLabel32 start = dataLabel32();
+-#if defined JS_CPU_X86
++#if defined JS_CPU_X86 || defined JS_CPU_X32
+         storeTypeTag(type, address);
+         DBGLABEL_NOMASM(endType);
+         storePayload(dreg, address);
+@@ -242,7 +242,7 @@
+         ImmTag type(jv.s.tag);
+         Imm32 payload(jv.s.payload.u32);
+         DataLabel32 start = dataLabel32();
+-#if defined JS_CPU_X86
++#if defined JS_CPU_X86 || defined JS_CPU_X32
+         store32(type, tagOf(address));
+         DBGLABEL_NOMASM(endType);
+         store32(payload, payloadOf(address));
+@@ -439,7 +439,7 @@
+         mismatches->append(branch32(NotEqual, T1, payloadOf(two)));
+     }
+ 
+-#ifdef JS_CPU_X86
++#if defined JS_CPU_X86 || defined JS_CPU_X32
+     void fastLoadDouble(RegisterID lo, RegisterID hi, FPRegisterID fpReg) {
+         if (MacroAssemblerX86Common::getSSEState() >= HasSSE4_1) {
+             m_assembler.movd_rr(lo, fpReg);
+@@ -453,13 +453,18 @@
+ #endif
+ 
+     void breakDouble(FPRegisterID srcDest, RegisterID typeReg, RegisterID dataReg) {
+-#ifdef JS_CPU_X86
++#if defined JS_CPU_X86
+         // Move the low 32-bits of the 128-bit XMM register into dataReg.
+         // Then, right shift the 128-bit XMM register by 4 bytes.
+         // Finally, move the new low 32-bits of the 128-bit XMM register into typeReg.
+         m_assembler.movd_rr(srcDest, dataReg);
+         m_assembler.psrldq_rr(srcDest, 4);
+         m_assembler.movd_rr(srcDest, typeReg);
++#elif defined JS_CPU_X32
++        m_assembler.movq_rr(srcDest, typeReg);
++        move(Registers::PayloadMaskReg, dataReg);
++        andPtr(typeReg, dataReg);
++        xorPtr(dataReg, typeReg);
+ #elif defined JS_CPU_SPARC
+         breakDoubleTo32(srcDest, typeReg, dataReg);
+ #elif defined JS_CPU_ARM
