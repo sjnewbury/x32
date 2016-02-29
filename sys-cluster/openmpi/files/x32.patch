@@ -1,0 +1,14 @@
+--- openmpi-1.10.2.orig/config/opal_config_asm.m4
++++ openmpi-1.10.2/config/opal_config_asm.m4
+@@ -795,6 +795,11 @@ AC_DEFUN([OPAL_CONFIG_ASM],[
+         OMPI_GCC_INLINE_ASSIGN=""
+         OPAL_ASM_SUPPORT_64BIT=0
+         case "${host}" in
++        x86_64-*x32)
++            ompi_cv_asm_arch="AMD64"
++            OPAL_ASM_SUPPORT_64BIT=1
++            OMPI_GCC_INLINE_ASSIGN='"xaddl %1,%0" : "=m"(ret), "+r"(negone) : "m"(ret)'
++            ;;
+         i?86-*|x86_64*)
+             if test "$ac_cv_sizeof_long" = "4" ; then
+                 ompi_cv_asm_arch="IA32"
