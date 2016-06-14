@@ -10,7 +10,7 @@ HOMEPAGE="http://www.gnu.org/software/guile/"
 SRC_URI="mirror://gnu/guile/${P}.tar.xz"
 
 LICENSE="LGPL-3"
-KEYWORDS="~amd64"
+KEYWORDS=""
 IUSE="networking +regex +deprecated emacs nls debug-freelist debug-malloc debug +threads"
 
 DEPEND="
@@ -25,7 +25,7 @@ DEPEND="
 	emacs? ( virtual/emacs )"
 RDEPEND="${DEPEND}"
 
-SLOT="12"
+SLOT="2"
 MAJOR="2.0"
 
 ECONF_SOURCE="${S}"

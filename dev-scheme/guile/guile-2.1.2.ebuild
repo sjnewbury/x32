@@ -10,7 +10,7 @@ HOMEPAGE="http://www.gnu.org/software/guile/"
 SRC_URI="http://hydra.nixos.org/build/32265164/download/4/guile-2.1.2.tar.xz"
 
 LICENSE="LGPL-3"
-KEYWORDS="~amd64"
+KEYWORDS=""
 IUSE="networking +regex +deprecated emacs nls debug-freelist debug-malloc debug +threads"
 
 DEPEND="
@@ -25,8 +25,8 @@ DEPEND="
 	emacs? ( virtual/emacs )"
 RDEPEND="${DEPEND}"
 
-SLOT="12"
-MAJOR="2.0"
+SLOT="2"
+MAJOR="2.1"
 
 ECONF_SOURCE="${S}"
 
