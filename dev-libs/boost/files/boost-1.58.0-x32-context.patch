@@ -1,5 +1,5 @@
---- libs/context/build/Jamfile.v2~	2015-04-04 17:31:00.000000000 +0000
-+++ libs/context/build/Jamfile.v2	2016-02-28 11:27:40.186371979 +0000
+--- ./libs/context/build/Jamfile.v2~	2015-04-04 17:31:00.000000000 +0000
++++ ./libs/context/build/Jamfile.v2	2016-02-28 11:27:40.186371979 +0000
 @@ -808,6 +808,49 @@
       <binary-format>pe
       <toolset>msvc

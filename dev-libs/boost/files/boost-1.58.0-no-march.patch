@@ -1,20 +1,114 @@
---- libs/log/build/Jamfile.v2~	2015-04-04 18:33:00.000000000 +0100
-+++ libs/log/build/Jamfile.v2	2016-02-25 22:50:32.871359855 +0000
+--- ./libs/log/build/Jamfile.v2~	2015-04-04 18:33:00.000000000 +0100
++++ ./libs/log/build/Jamfile.v2	2016-02-25 22:50:32.871359855 +0000
 @@ -249,7 +249,7 @@
              result = ;
              if <toolset>gcc in $(properties) || <toolset>clang in $(properties)
              {
 -                result = <cxxflags>"-march=core2 -msse -msse2 -msse3 -mssse3" ;
-+                result = <cxxflags>"-msse -msse2 -msse3 -mssse3" ;
++                result = <cxxflags> ;
              }
              else if <toolset>intel in $(properties)
              {
+@@ -274,7 +274,7 @@
+                 }
+                 else
+                 {
+-                    result = <cxxflags>"-march=core2" ;
++                    result = <cxxflags> ;
+                 }
+             }
+             else if <toolset>msvc in $(properties)
 @@ -311,7 +311,7 @@
              result = ;
              if <toolset>gcc in $(properties)
              {
 -                result = <cxxflags>"-march=core-avx2 -mavx -mavx2 -fabi-version=0" ;
-+                result = <cxxflags>"-mavx -mavx2 -fabi-version=0" ;
++                result = <cxxflags>"-fabi-version=0" ;
              }
              else if <toolset>clang in $(properties)
              {
+@@ -330,22 +330,22 @@
+             }
+             else if <toolset>clang in $(properties)
+             {
+-                result = <cxxflags>"-march=core-avx2 -mavx -mavx2" ;
++                result = <cxxflags> ;
+             }
+             else if <toolset>intel in $(properties)
+             {
+                 if <toolset-intel:platform>win in $(properties)
+                 {
+-                    result = <cxxflags>"/arch:CORE-AVX2" ;
++                    result = <cxxflags> ;
+                 }
+                 else
+                 {
+-                    result = <cxxflags>"-march=core-avx2 -fabi-version=0" ;
++                    result = <cxxflags>"-fabi-version=0" ;
+                 }
+             }
+             else if <toolset>msvc in $(properties)
+             {
+-                result = <cxxflags>"/arch:AVX" ;
++                result = <cxxflags> ;
+             }
+         }
+     }
+--- ./libs/log/src/dump_ssse3.cpp~	2015-08-04 19:17:10.000000000 +0100
++++ ./libs/log/src/dump_ssse3.cpp	2016-05-02 11:04:37.203829393 +0100
+@@ -22,6 +22,10 @@
+ #include <boost/log/detail/config.hpp>
+ #include <boost/log/detail/header.hpp>
+ 
++#if !defined(__SSSE3__)
++#error "SSSE3 Unsupported!"
++#endif
++
+ #if defined(__x86_64) || defined(__x86_64__) || \
+     defined(__amd64__) || defined(__amd64) || \
+     defined(_M_X64)
+--- ./libs/log/src/dump_avx2.cpp~	2015-08-04 19:17:10.000000000 +0100
++++ ./libs/log/src/dump_avx2.cpp	2016-05-02 11:04:02.312988458 +0100
+@@ -22,6 +22,10 @@
+ #include <boost/log/detail/config.hpp>
+ #include <boost/log/detail/header.hpp>
+ 
++#if !defined(__AVX2__)
++#error "AVX2 Unsupported!"
++#endif
++
+ #if defined(__x86_64) || defined(__x86_64__) || \
+     defined(__amd64__) || defined(__amd64) || \
+     defined(_M_X64)
+--- ./libs/log/config/x86-ext/Jamfile.jam~	2015-08-04 19:17:10.000000000 +0100
++++ ./libs/log/config/x86-ext/Jamfile.jam	2016-05-02 11:15:02.685571326 +0100
+@@ -15,20 +15,20 @@
+ 
+ obj ssse3 : ssse3.cpp
+     :
+-        <toolset>gcc:<cxxflags>"-march=core2 -msse -msse2 -msse3 -mssse3"
+-        <toolset>clang:<cxxflags>"-march=core2 -msse -msse2 -msse3 -mssse3"
+-        <toolset>intel-linux:<cxxflags>"-march=core2"
+-        <toolset>intel-darwin:<cxxflags>"-march=core2"
++        <toolset>gcc:<cxxflags>
++        <toolset>clang:<cxxflags>
++        <toolset>intel-linux:<cxxflags>
++        <toolset>intel-darwin:<cxxflags>
+         <toolset>intel-win:<cxxflags>"/QxSSSE3"
+     ;
+ 
+ obj avx2 : avx2.cpp
+     :
+-        <toolset>gcc:<cxxflags>"-march=core-avx2 -mavx -mavx2 -fabi-version=0"
+-        <toolset>clang:<cxxflags>"-march=core-avx2 -mavx -mavx2"
+-        <toolset>intel-linux:<cxxflags>"-march=core-avx2 -fabi-version=0"
+-        <toolset>intel-darwin:<cxxflags>"-march=core-avx2 -fabi-version=0"
+-        <toolset>intel-win:<cxxflags>"/arch:CORE-AVX2"
++        <toolset>gcc:<cxxflags>"-fabi-version=0"
++        <toolset>clang:<cxxflags>
++        <toolset>intel-linux:<cxxflags>"-fabi-version=0"
++        <toolset>intel-darwin:<cxxflags>"-fabi-version=0"
++        <toolset>intel-win:<cxxflags>
+         <toolset>msvc:<cxxflags>"/arch:AVX"
+     ;
+ 
