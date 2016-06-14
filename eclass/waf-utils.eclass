@@ -15,10 +15,12 @@
 # waf-based packages much easier.
 # Its main features are support of common portage default settings.
 
-inherit base eutils multilib toolchain-funcs multiprocessing
+inherit eutils multilib toolchain-funcs multiprocessing
+
+[[ ${EAPI} -lt 6 ]] && inherit base
 
 case ${EAPI:-0} in
-	3|4|5) EXPORT_FUNCTIONS src_configure src_compile src_install ;;
+	3|4|5|6) EXPORT_FUNCTIONS src_configure src_compile src_install ;;
 	*) die "EAPI=${EAPI} is not supported" ;;
 esac
 
