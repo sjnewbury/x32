@@ -62,6 +62,8 @@ src_prepare() {
 
 	epatch_user
 
+	eautoreconf
+
 	multilib_copy_sources
 
 	if [[ ${CHOST} == *-freebsd* ]]; then

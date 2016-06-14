@@ -1,0 +1,11 @@
+--- js/src/config/milestone.pl~	2013-02-11 22:33:22.000000000 +0000
++++ js/src/config/milestone.pl	2016-03-08 22:41:57.521344968 +0000
+@@ -55,7 +55,7 @@
+ #
+ my $milestone = Moz::Milestone::getOfficialMilestone($MILESTONE_FILE);
+ 
+-if (defined(@TEMPLATE_FILE)) {
++if (@TEMPLATE_FILE) {
+   my $TFILE;
+ 
+   foreach $TFILE (@TEMPLATE_FILE) {
