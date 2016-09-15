@@ -1,0 +1,22 @@
+diff --git a/src/arch-x86_64.c b/src/arch-x86_64.c
+index dae66cd..4fb3efb 100644
+--- a/src/arch-x86_64.c
++++ b/src/arch-x86_64.c
+@@ -332,12 +332,16 @@ x86_64_prelink_conflict_rela (DSO *dso, struct prelink_info *info,
+       ret->r_info = GELF_R_INFO (0, (gelf_getclass (dso->elf) == ELFCLASS32 ? R_X86_64_32 : R_X86_64_64));
+       /* FALLTHROUGH */
+     case R_X86_64_JUMP_SLOT:
+-    case R_X86_64_64:
+     case R_X86_64_IRELATIVE:
+       ret->r_addend = value + rela->r_addend;
+       if (conflict != NULL && conflict->ifunc)
+ 	ret->r_info = GELF_R_INFO (0, R_X86_64_IRELATIVE);
+       break;
++    case R_X86_64_64:
++      ret->r_addend = value + rela->r_addend;
++      if (conflict != NULL && conflict->ifunc)
++	ret->r_info = GELF_R_INFO (0, R_X86_64_64);
++      break;
+     case R_X86_64_32:
+       value += rela->r_addend;
+       ret->r_addend = value;

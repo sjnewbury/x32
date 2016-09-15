@@ -16,13 +16,13 @@ SRC_URI="mirror://sourceforge/boost/${MY_P}.tar.bz2"
 
 LICENSE="Boost-1.0"
 SLOT="0/${PV}" # ${PV} instead ${MAJOR_V} due to bug 486122
-KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~ppc-aix ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos ~sparc-solaris ~sparc64-solaris ~x86-solaris ~x86-winnt"
+KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~x86 ~ppc-aix ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux ~ppc-macos ~x64-macos ~x86-macos ~sparc-solaris ~sparc64-solaris ~x86-solaris ~x86-winnt"
 
 IUSE="context debug doc icu +nls mpi python static-libs +threads tools"
 
 RDEPEND="icu? ( >=dev-libs/icu-3.6:=[${MULTILIB_USEDEP}] )
 	!icu? ( virtual/libiconv[${MULTILIB_USEDEP}] )
-	mpi? ( virtual/mpi[cxx,threads] )
+	mpi? ( >=virtual/mpi-2.0-r4[${MULTILIB_USEDEP},cxx,threads] )
 	python? ( ${PYTHON_DEPS} )
 	app-arch/bzip2[${MULTILIB_USEDEP}]
 	sys-libs/zlib[${MULTILIB_USEDEP}]
@@ -62,11 +62,6 @@ tools_needed() {
 	multilib_is_native_abi && use tools
 }
 
-# MPI stuff is not ported on multilib yet, disabling it for non-native ABIs
-mpi_needed() {
-	multilib_is_native_abi && use mpi
-}
-
 create_user-config.jam() {
 	local compiler compiler_version compiler_executable
 
@@ -81,7 +76,7 @@ create_user-config.jam() {
 	fi
 	local mpi_configuration python_configuration
 
-	if mpi_needed; then
+	if use mpi; then
 		mpi_configuration="using mpi ;"
 	fi
 
@@ -133,16 +128,24 @@ src_prepare() {
 }
 
 ejam() {
-	local b2_opts="--user-config=${BOOST_ROOT}/user-config.jam $@"
-	echo b2 ${b2_opts}
-	b2 ${b2_opts}
+	local b2_opts=(
+		"--user-config=${BOOST_ROOT}/user-config.jam"
+		"$@"
+	)
+	echo b2 "${b2_opts[@]}"
+	b2 "${b2_opts[@]}"
 }
 
 src_configure() {
 	# Workaround for too many parallel processes requested, bug #506064
 	[ "$(makeopts_jobs)" -gt 64 ] && MAKEOPTS="${MAKEOPTS} -j64"
 
-	OPTIONS="$(usex debug gentoodebug gentoorelease) -j$(makeopts_jobs) -q -d+2"
+	OPTIONS=(
+		$(usex debug gentoodebug gentoorelease)
+		"-j$(makeopts_jobs)"
+		-q
+		-d+2
+	)
 
 	if [[ ${CHOST} == *-darwin* ]]; then
 		# We need to add the prefix, and in two cases this exceeds, so prepare
@@ -167,18 +170,37 @@ src_configure() {
 	# Do _not_ use C++11 yet, make sure to force GNU C++ 98 standard.
 	append-cxxflags -std=gnu++98
 
-	use icu && OPTIONS+=" -sICU_PATH=${EPREFIX}/usr"
-	use icu || OPTIONS+=" --disable-icu boost.locale.icu=off"
-	mpi_needed || OPTIONS+=" --without-mpi"
-	use nls || OPTIONS+=" --without-locale"
-	use context || OPTIONS+=" --without-context --without-coroutine --without-coroutine2"
+	use icu && OPTIONS+=(
+			"-sICU_PATH=${EPREFIX}/usr"
+		)
+	use icu || OPTIONS+=(
+			--disable-icu
+			boost.locale.icu=off
+		)
+	use mpi || OPTIONS+=(
+			--without-mpi
+		)
+	use nls || OPTIONS+=(
+			--without-locale
+		)
+	use context || OPTIONS+=(
+			--without-context
+			--without-coroutine
+			--without-coroutine2
+		)
 
-	OPTIONS+=" pch=off"
-	OPTIONS+=" --boost-build=${EPREFIX}/usr/share/boost-build --prefix=\"${ED}usr\""
-	OPTIONS+=" --layout=system"
-	OPTIONS+=" threading=$(usex threads multi single) link=$(usex static-libs shared,static shared)"
+	OPTIONS+=(
+		pch=off
+		--boost-build="${EPREFIX}"/usr/share/boost-build
+		--prefix="${ED}usr"
+		--layout=system
+		threading=$(usex threads multi single)
+		link=$(usex static-libs shared,static shared)
+	)
 
-	[[ ${CHOST} == *-winnt* ]] && OPTIONS+=" -sNO_BZIP2=1"
+	[[ ${CHOST} == *-winnt* ]] && OPTIONS+=(
+			-sNO_BZIP2=1
+		)
 }
 
 multilib_src_compile() {
@@ -199,7 +221,7 @@ multilib_src_compile() {
 
 		ejam \
 			${ABI_OVERRIDE} \
-			${OPTIONS} \
+			"${OPTIONS[@]}" \
 			${PYTHON_OPTIONS} \
 			|| die "Building of Boost libraries failed"
 
@@ -218,7 +240,7 @@ multilib_src_compile() {
 					|| die "Renaming of '${dir}' to '${dir}-${EPYTHON}' failed"
 			done
 
-			if mpi_needed; then
+			if use mpi; then
 				if [[ -z "${MPI_PYTHON_MODULE}" ]]; then
 					MPI_PYTHON_MODULE="$(find bin.v2/libs/mpi/build/*/gentoo* -name mpi.so)"
 					if [[ "$(echo "${MPI_PYTHON_MODULE}" | wc -l)" -ne 1 ]]; then
@@ -246,7 +268,7 @@ multilib_src_compile() {
 
 		ejam \
 			${ABI_OVERRIDE} \
-			${OPTIONS} \
+			"${OPTIONS[@]}" \
 			${PYTHON_OPTIONS} \
 			|| die "Building of Boost tools failed"
 		popd > /dev/null || die
@@ -297,7 +319,7 @@ multilib_src_install() {
 					|| die "Copying of '${dir}-${EPYTHON}' to '${dir}' failed"
 			done
 
-			if mpi_needed; then
+			if use mpi; then
 				cp -p stage/lib/mpi.so-${EPYTHON} "${MPI_PYTHON_MODULE}" \
 					|| die "Copying of 'stage/lib/mpi.so-${EPYTHON}' to '${MPI_PYTHON_MODULE}' failed"
 				cp -p stage/lib/mpi.so-${EPYTHON} stage/lib/mpi.so \
@@ -310,7 +332,7 @@ multilib_src_install() {
 
 		ejam \
 			${ABI_OVERRIDE} \
-			${OPTIONS} \
+			"${OPTIONS[@]}" \
 			${PYTHON_OPTIONS} \
 			--includedir="${ED}usr/include" \
 			--libdir="${ED}usr/$(get_libdir)" \
@@ -321,7 +343,7 @@ multilib_src_install() {
 
 			# Move mpi.so Python module to Python site-packages directory.
 			# https://svn.boost.org/trac/boost/ticket/2838
-			if mpi_needed; then
+			if use mpi; then
 				local moddir=$(python_get_sitedir)/boost
 				# moddir already includes eprefix
 				mkdir -p "${D}${moddir}" || die
