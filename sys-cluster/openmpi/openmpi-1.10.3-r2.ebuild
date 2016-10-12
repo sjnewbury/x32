@@ -6,7 +6,7 @@ EAPI=6
 
 FORTRAN_NEEDED=fortran
 
-inherit cuda flag-o-matic fortran-2 java-pkg-opt-2 toolchain-funcs versionator multilib-minimal
+inherit autotools cuda flag-o-matic fortran-2 java-pkg-opt-2 toolchain-funcs versionator multilib-minimal
 
 MY_P=${P/-mpi}
 S=${WORKDIR}/${MY_P}
@@ -203,4 +203,7 @@ multilib_src_install_all() {
 	fi
 
 	einstalldocs
+
+	# Avoid collisions with dev-libs/intel-common
+	rm -rf "${ED}"usr/share/man/man3 &> /dev/null || die
 }
