@@ -11,25 +11,36 @@ inherit autotools eutils flag-o-matic
 
 DESCRIPTION="Modifies ELFs to avoid runtime symbol resolutions resulting in faster load times"
 HOMEPAGE="https://git.yoctoproject.org/cgit/cgit.cgi/prelink-cross/ https://people.redhat.com/jakub/prelink"
-SRC_URI="https://git.yoctoproject.org/cgit/cgit.cgi/${MY_PN}/snapshot/${MY_P}.tar.bz2
-	doc? ( https://people.redhat.com/jakub/prelink/prelink.pdf )"
+
+if [[ ${PV} == 99999999 ]]; then
+	inherit git-r3
+	EGIT_REPO_URI=git://git.yoctoproject.org/prelink-cross
+	SRC_URI="doc? ( https://people.redhat.com/jakub/prelink/prelink.pdf )"
+	KEYWORDS=
+else
+	SRC_URI="https://git.yoctoproject.org/cgit/cgit.cgi/${MY_PN}/snapshot/${MY_P}.tar.bz2
+		doc? ( https://people.redhat.com/jakub/prelink/prelink.pdf )"
+	KEYWORDS="~amd64 -arm ~ppc ~ppc64 ~x86"
+	S=${WORKDIR}/${MY_P}
+fi
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64 -arm ~ppc ~ppc64 ~x86"
 IUSE="doc selinux"
 
 DEPEND=">=dev-libs/elfutils-0.100[static-libs(+)]
 	selinux? ( sys-libs/libselinux[static-libs(+)] )
 	!dev-libs/libelf
 	sys-libs/binutils-libs
-	>=sys-libs/glibc-2.8"
+	>=sys-libs/glibc-2.8
+	doc? ( media-gfx/transfig )"
 RDEPEND="${DEPEND}
 	>=sys-devel/binutils-2.18"
 
-S=${WORKDIR}/${MY_P}
 
 src_prepare() {
+	default
+
 	epatch "${FILESDIR}"/${PN}-20130503-prelink-conf.patch
 	epatch "${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
 	epatch "${FILESDIR}"/${PN}-x32.patch
