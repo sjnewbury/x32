@@ -32,8 +32,7 @@ DEPEND=">=dev-libs/elfutils-0.100[static-libs(+)]
 	selinux? ( sys-libs/libselinux[static-libs(+)] )
 	!dev-libs/libelf
 	sys-libs/binutils-libs
-	>=sys-libs/glibc-2.8
-	doc? ( media-gfx/transfig )"
+	>=sys-libs/glibc-2.8"
 RDEPEND="${DEPEND}
 	>=sys-devel/binutils-2.18"
 
@@ -44,6 +43,9 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-20130503-prelink-conf.patch
 	epatch "${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
 	epatch "${FILESDIR}"/${PN}-x32.patch
+
+	# Disable build of documentation
+	sed -i -e '/SUBDIRS/s/doc //' Makefile.am
 
 	sed -i -e '/^CC=/s: : -Wl,--disable-new-dtags :' testsuite/functions.sh #100147
 
