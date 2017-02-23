@@ -1,0 +1,11 @@
+--- ./src/gpg-error-config.in~	2014-01-24 18:57:44.000000000 +0000
++++ ./src/gpg-error-config.in	2017-02-23 10:03:20.950907361 +0000
+@@ -78,7 +78,7 @@
+ 	    ;;
+ 	--libs)
+ 	    case "$libdir" in
+-		/usr/lib|/usr/lib64|/lib|/lib64) ;;
++		/usr/lib|/usr/lib64|/usr/libx32|/lib|/lib64|/libx32) ;;
+ 		*)
+ 		    output="$output -L$libdir"
+ 		    ;;
