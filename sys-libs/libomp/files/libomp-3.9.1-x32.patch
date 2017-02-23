@@ -1247,7 +1247,7 @@ diff -urN openmp-3.9.1.src.orig/runtime/src/z_Linux_util.c openmp-3.9.1.src/runt
  #   endif /* __NR_sched_getaffinity */
  
 +#  elif KMP_ARCH_X86_64_32
-+#   #define __X32_SYSCALL_BIT 0x40000000
++#   define __X32_SYSCALL_BIT 0x40000000
 +#   ifndef __NR_sched_setaffinity
 +#    define __NR_sched_setaffinity  (__X32_SYSCALL_BIT + 203)
 +#   elif __NR_sched_setaffinity != (__X32_SYSCALL_BIT + 203)
