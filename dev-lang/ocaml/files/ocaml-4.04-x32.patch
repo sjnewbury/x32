@@ -1,0 +1,104 @@
+Package: src:ocaml
+Version: 4.02.1-2
+Severity: wishlist
+Tags: patch
+User: debian-x32@lists.debian.org
+Usertags: port-x32
+
+
+Please apply the attached patch, it adds support for x32 (as non-native).
+It's made against 4.02.1-2 (in experimental) as I guess you're not going
+to ever upload 4.01 again other than for eventual RC bug fixes.
+
+As you can see, the main problem is the current code confusing x32 for
+sometimes amd64 sometimes i386.  I guess adding native optimized support
+wouldn't be hard (copying parts of i386 and parts of amd64...), but, not
+knowing anything about ocaml or the compiler, I preferred to keep it safe.
+</pre><pre>
+--- ocaml-4.02.1.orig/byterun/caml/signals_machdep.h
++++ ocaml-4.02.1/byterun/caml/signals_machdep.h
+@@ -25,10 +25,19 @@
+ 
+ #elif defined(__GNUC__) && defined(__x86_64__)
+ 
++#ifdef __ILP32__
++/* x32 */
++#define Read_and_clear(dst,src) \
++  asm("xorl %0, %0; xchgl %0, %1" \
++      : "=r" (dst), "=m" (src) \
++      : "m" (src))
++#else
++/* amd64 */
+ #define Read_and_clear(dst,src) \
+   asm("xorq %0, %0; xchgq %0, %1" \
+       : "=r" (dst), "=m" (src) \
+       : "m" (src))
++#endif
+ 
+ #elif defined(__GNUC__) && defined(__ppc__)
+ 
+--- ocaml-4.02.1.orig/configure
++++ ocaml-4.02.1/configure
+@@ -832,6 +832,7 @@ case "$target" in
+   arm*-*-linux-gnueabi)         arch=arm; system=linux_eabi;;
+   arm*-*-openbsd*)              arch=arm; system=bsd;;
+   zaurus*-*-openbsd*)           arch=arm; system=bsd;;
++  x86_64-*-linux-gnux32)        arch=x32; system=linux;;
+   x86_64-*-linux*)              arch=amd64; system=linux;;
+   x86_64-*-gnu*)                arch=amd64; system=gnu;;
+   x86_64-*-freebsd*)            arch=amd64; system=freebsd;;
+--- ocaml-4.02.1.orig/otherlibs/num/bng.c
++++ ocaml-4.02.1/otherlibs/num/bng.c
+@@ -17,7 +17,7 @@
+ #include "config.h"
+ 
+ #if defined(__GNUC__) && BNG_ASM_LEVEL > 0
+-#if defined(BNG_ARCH_ia32)
++#if defined(BNG_ARCH_ia32) || defined(BNG_ARCH_x32)
+ #include "bng_ia32.c"
+ #elif defined(BNG_ARCH_amd64)
+ #include "bng_amd64.c"
+--- ocaml-4.02.1.orig/otherlibs/num/bng_ia32.c
++++ ocaml-4.02.1/otherlibs/num/bng_ia32.c
+@@ -187,7 +187,7 @@ static bngdigit bng_ia32_mult_sub_digit
+    This is faster than the plain IA32 code above on the Pentium 4.
+    (Arithmetic operations with carry are slow on the Pentium 4). */
+ 
+-#if BNG_ASM_LEVEL >= 2
++#if BNG_ASM_LEVEL >= 2 || defined(__x86_64__)
+ 
+ static bngcarry bng_ia32sse2_add
+        (bng a/*[alen]*/, bngsize alen,
+@@ -393,6 +393,13 @@ static int bng_ia32_sse2_supported(void)
+ 
+ static void bng_ia32_setup_ops(void)
+ {
++#ifdef __x86_64__
++  /* x32 -- SSE2 always supported */
++  bng_ops.add = bng_ia32sse2_add;
++  bng_ops.sub = bng_ia32sse2_sub;
++  bng_ops.mult_add_digit = bng_ia32sse2_mult_add_digit;
++  bng_ops.mult_sub_digit = bng_ia32sse2_mult_sub_digit;
++#else
+ #if BNG_ASM_LEVEL >= 2
+   if (bng_ia32_sse2_supported()) {
+     bng_ops.add = bng_ia32sse2_add;
+@@ -406,6 +413,7 @@ static void bng_ia32_setup_ops(void)
+   bng_ops.sub = bng_ia32_sub;
+   bng_ops.mult_add_digit = bng_ia32_mult_add_digit;
+   bng_ops.mult_sub_digit = bng_ia32_mult_sub_digit;
++#endif
+ }
+ 
+ #define BNG_SETUP_OPS bng_ia32_setup_ops()
+--- ocaml-4.04/Makefile.tools~	2016-11-04 15:59:43.000000000 +0000
++++ ocaml-4.04/Makefile.tools	2017-02-23 06:45:22.663167359 +0000
+@@ -100,7 +100,7 @@
+ OCAMLYACC=$(TOPDIR)/yacc/ocamlyacc$(EXE)
+ DUMPOBJ=$(OCAMLRUN) $(OTOPDIR)/tools/dumpobj
+ OBJINFO=$(OCAMLRUN) $(OTOPDIR)/tools/ocamlobjinfo
+-BYTECODE_ONLY=[ "$(ARCH)" = "none" -o "$(ASM)" = "none" ]
++BYTECODE_ONLY=[ "$(ARCH)" = "none" -o "$(ARCH)" = "x32" -o "$(ASM)" = "none" ]
+ NATIVECODE_ONLY=false
+ 
+ #FORTRAN_COMPILER=

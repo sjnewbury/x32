@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Gentoo Foundation
+# Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
@@ -6,22 +6,23 @@ EAPI="5"
 
 inherit flag-o-matic eutils multilib versionator toolchain-funcs
 
-PATCHLEVEL="7"
-MY_P="${P/_/+}"
+PATCHLEVEL="8"
+MY_P="${P/_/-}"
 DESCRIPTION="Fast modern type-inferring functional programming language descended from the ML family"
 HOMEPAGE="http://www.ocaml.org/"
-SRC_URI="http://caml.inria.fr/pub/distrib/ocaml-$(get_version_component_range 1-2)/${MY_P}.tar.xz
+SRC_URI="https://github.com/ocaml/ocaml/archive/${PV/_/+}.tar.gz -> ${MY_P}.tar.gz
 	mirror://gentoo/${PN}-patches-${PATCHLEVEL}.tar.bz2"
 
 LICENSE="QPL-1.0 LGPL-2"
 # Everytime ocaml is updated to a new version, everything ocaml must be rebuilt,
 # so here we go with the subslot.
 SLOT="0/${PV}"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sparc ~x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux"
-IUSE="emacs latex ncurses +ocamlopt X xemacs"
+KEYWORDS="alpha amd64 arm hppa ia64 ~mips ppc ppc64 sparc x86 ~amd64-fbsd ~x86-fbsd ~amd64-linux ~x86-linux"
+IUSE="emacs flambda latex ncurses +ocamlopt X xemacs"
 
 RDEPEND="
-	ncurses? ( sys-libs/ncurses )
+	sys-libs/binutils-libs:=
+	ncurses? ( sys-libs/ncurses:0= )
 	X? ( x11-libs/libX11 x11-proto/xproto )"
 DEPEND="${RDEPEND}
 	virtual/pkgconfig"
@@ -43,7 +44,7 @@ pkg_setup() {
 
 src_prepare() {
 	EPATCH_SUFFIX="patch" epatch "${WORKDIR}/patches"
-	epatch "${FILESDIR}"/${PN}-4.02.1-x32.patch
+	epatch "${FILESDIR}"/${PN}-4.04-x32.patch
 }
 
 src_configure() {
@@ -61,6 +62,7 @@ src_configure() {
 
 	use ncurses || myconf="${myconf} -no-curses"
 	use X || myconf="${myconf} -no-graph"
+	use flambda && myconf="${myconf} -flambda"
 
 	# ocaml uses a home-brewn configure script, preventing it to use econf.
 	RAW_LDFLAGS="$(raw-ldflags)" ./configure \
@@ -92,6 +94,14 @@ src_compile() {
 	fi
 }
 
+src_test() {
+	if use ocamlopt ; then
+		emake -j1 tests
+	else
+		ewarn "${PN} testsuite requires ocamlopt useflag"
+	fi
+}
+
 src_install() {
 	emake BINDIR="${ED}"/usr/bin \
 		LIBDIR="${ED}"/usr/$(get_libdir)/ocaml \
@@ -102,7 +112,7 @@ src_install() {
 	dodir /usr/include
 	dosym /usr/$(get_libdir)/ocaml/caml /usr/include/caml
 
-	dodoc Changes INSTALL README
+	dodoc Changes README.adoc
 
 	# Create and envd entry for latex input files
 	if use latex ; then
