@@ -16,11 +16,11 @@ diff -urN cmake-3.1.3/Modules/FindOpenAL.cmake cmake-3.1.3.x32/Modules/FindOpenA
 @@ -241,6 +241,10 @@
              list(APPEND _lib_dirs "lib64/pkgconfig")
            endif()
++          get_property(uselibx32 GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS)
++          if(uselibx32)
++            list(APPEND _lib_dirs "libx32/pkgconfig")
++          endif()
          endif()
-+        get_property(uselibx32 GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS)
-+        if(uselibx32)
-+          list(APPEND _lib_dirs "libx32/pkgconfig")
-+        endif()
        endif()
        list(APPEND _lib_dirs "lib/pkgconfig")
  
