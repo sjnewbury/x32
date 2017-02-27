@@ -58,11 +58,11 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-2.8.10.2-FindPythonLibs.patch
 	"${FILESDIR}"/${PN}-3.1.0-FindPythonInterp.patch
 
-	# x32 support
-	"${FILESDIR}"/${PN}-3.7.2-libx32.patch
-
 	# upstream fixes (can usually be removed with a version bump)
 	"${FILESDIR}"/${PN}-3.6.1-find_library-lib32.patch
+
+	# x32 support
+	"${FILESDIR}"/${PN}-3.6.3-libx32.patch
 )
 
 cmake_src_bootstrap() {

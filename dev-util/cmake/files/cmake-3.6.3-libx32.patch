@@ -197,15 +197,15 @@ diff -urN cmake-3.1.3/Source/cmMakefile.h cmake-3.1.3.x32/Source/cmMakefile.h
    /Library/Frameworks
 --- cmake-3.7.2/Modules/FindGLEW.cmake.orig	2017-02-22 21:09:53.578005351 +0000
 +++ cmake-3.7.2/Modules/FindGLEW.cmake	2017-02-22 21:19:59.605296205 +0000
-@@ -27,7 +27,7 @@
+@@ -35,7 +35,7 @@
+ #  License text for the above reference.)
+ 
  find_path(GLEW_INCLUDE_DIR GL/glew.h)
+-find_library(GLEW_LIBRARY NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64)
++find_library(GLEW_LIBRARY NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64 libx32)
  
- if(NOT GLEW_LIBRARY)
--  find_library(GLEW_LIBRARY_RELEASE NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64)
-+  find_library(GLEW_LIBRARY_RELEASE NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64 libx32)
-   find_library(GLEW_LIBRARY_DEBUG NAMES GLEWd glew32d glewd PATH_SUFFIXES lib64)
- 
-   include(${CMAKE_CURRENT_LIST_DIR}/SelectLibraryConfigurations.cmake)
+ set(GLEW_INCLUDE_DIRS ${GLEW_INCLUDE_DIR})
+ set(GLEW_LIBRARIES ${GLEW_LIBRARY})
 --- cmake-3.7.2/Source/cmFindPackageCommand.cxx.orig	2017-01-13 14:05:41.000000000 +0000
 +++ cmake-3.7.2/Source/cmFindPackageCommand.cxx	2017-02-22 21:27:47.930902780 +0000
 @@ -76,6 +76,7 @@
