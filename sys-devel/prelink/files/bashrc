@@ -1,0 +1,32 @@
+post_pkg_preinst() {
+	ebegin "Prelinking in ${D}"
+
+	# Find all dynamic libraries, and discover their paths
+	path_list=()
+	for dynlib_path in $(scanelf -B -R -E ET_DYN -y -F "%F" ${D}); do
+		dynlib_filename=$(scanelf -B -F "%f" ${dynlib_path});
+		path_list+=( "${dynlib_path/${dynlib_filename}}" )
+	done
+
+	# Remove duplicates by abusing associative array
+	declare -A uniq_path_list
+	for n in "${path_list[@]}"; do
+		uniq_path_list["$n"]=1
+	done
+
+	# Put paths into colon separated values
+	for ld_path in ${!uniq_path_list[@]}; do
+		if [[ -z ${image_ld_paths} ]]; then
+			image_ld_paths="${ld_path}"
+		else
+			image_ld_paths="${image_ld_paths}:${ld_path}"
+		fi
+	done
+
+	printf "LD_LIBRARY_PATH=%s\n" ${image_ld_paths}
+
+	prelink -qm ${PRELINKOPTS} \
+		--ld-library-path="${image_ld_paths}" \
+		"${D}"
+	eend $?
+}
