@@ -43,6 +43,7 @@ src_prepare() {
 	epatch "${FILESDIR}"/${PN}-20130503-prelink-conf.patch
 	epatch "${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
 	epatch "${FILESDIR}"/${PN}-x32.patch
+	epatch "${FILESDIR}"/adjust-x32-mmap-range.patch
 
 	# Disable build of documentation
 	sed -i -e '/SUBDIRS/s/doc //' Makefile.am
