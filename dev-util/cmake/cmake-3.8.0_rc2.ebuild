@@ -62,7 +62,10 @@ PATCHES=(
 	"${FILESDIR}"/${PN}-3.1.0-FindPythonInterp.patch
 
 	# x32 support
-	"${FILESDIR}"/${PN}-3.7.2-libx32.patch
+	"${FILESDIR}"/0001-Add-support-for-x32-abi.patch
+	"${FILESDIR}"/0002-Modules-Add-x32-abi-support-to-hard-coded-paths.patch
+	"${FILESDIR}"/0003-Help-Add-notes-for-topic-x32-abi.patch
+	
 
 	# upstream fixes (can usually be removed with a version bump)
 )

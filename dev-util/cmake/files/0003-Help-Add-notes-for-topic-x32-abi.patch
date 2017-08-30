@@ -1,0 +1,25 @@
+From a13e6e58c2990f450071bd9e53a953328d511a13 Mon Sep 17 00:00:00 2001
+From: Brad King <brad.king@kitware.com>
+Date: Mon, 6 Mar 2017 11:15:00 -0500
+Subject: [PATCH 3/3] Help: Add notes for topic 'x32-abi'
+
+---
+ Help/release/dev/x32-abi.rst | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ create mode 100644 Help/release/dev/x32-abi.rst
+
+diff --git a/Help/release/dev/x32-abi.rst b/Help/release/dev/x32-abi.rst
+new file mode 100644
+index 000000000..7571facc1
+--- /dev/null
++++ b/Help/release/dev/x32-abi.rst
+@@ -0,0 +1,6 @@
++x32-abi
++-------
++
++* The :command:`find_library` command learned to search ``libx32`` paths
++  when the build targets the ``x32`` ABI.  See the
++  :prop_gbl:`FIND_LIBRARY_USE_LIBX32_PATHS` global property.
+-- 
+2.11.1
+

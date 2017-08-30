@@ -1,0 +1,249 @@
+From 0b12a5a2153a97ec98de92a8b5181ad200a032e1 Mon Sep 17 00:00:00 2001
+From: Steven Newbury <steve@snewbury.org.uk>
+Date: Mon, 27 Feb 2017 21:06:51 +0000
+Subject: [PATCH 1/3] Add support for x32-abi
+
+Detect x32-abi through CMakeCompilerABI infrastruture and use this
+information at runtime to determine the correct library paths with
+`FIND_LIBRARY_USE_LIBX32_PATHS`.
+
+Fixes: #15994
+---
+ Help/manual/cmake-properties.7.rst                   |  1 +
+ Help/prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS.rst      | 12 ++++++++++++
+ .../CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.rst         |  1 +
+ Modules/CMakeCompilerABI.h                           |  4 ++++
+ Modules/FindPkgConfig.cmake                          |  4 ++++
+ Modules/Platform/UnixPaths.cmake                     |  1 +
+ Source/cmExportInstallFileGenerator.cxx              |  4 +++-
+ Source/cmFindLibraryCommand.cxx                      |  9 ++++++++-
+ Source/cmFindPackageCommand.cxx                      | 11 +++++++++++
+ Source/cmFindPackageCommand.h                        |  1 +
+ Source/cmMakefile.cxx                                | 20 ++++++++++++++++++--
+ Source/cmMakefile.h                                  |  2 ++
+ 12 files changed, 66 insertions(+), 4 deletions(-)
+ create mode 100644 Help/prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS.rst
+
+diff --git a/Help/manual/cmake-properties.7.rst b/Help/manual/cmake-properties.7.rst
+index 5bd63654e..2157ba5ba 100644
+--- a/Help/manual/cmake-properties.7.rst
++++ b/Help/manual/cmake-properties.7.rst
+@@ -26,6 +26,7 @@ Properties of Global Scope
+    /prop_gbl/ENABLED_LANGUAGES
+    /prop_gbl/FIND_LIBRARY_USE_LIB32_PATHS
+    /prop_gbl/FIND_LIBRARY_USE_LIB64_PATHS
++   /prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS
+    /prop_gbl/FIND_LIBRARY_USE_OPENBSD_VERSIONING
+    /prop_gbl/GLOBAL_DEPENDS_DEBUG_MODE
+    /prop_gbl/GLOBAL_DEPENDS_NO_CYCLES
+diff --git a/Help/prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS.rst b/Help/prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS.rst
+new file mode 100644
+index 000000000..b87b09be1
+--- /dev/null
++++ b/Help/prop_gbl/FIND_LIBRARY_USE_LIBX32_PATHS.rst
+@@ -0,0 +1,12 @@
++FIND_LIBRARY_USE_LIBX32_PATHS
++-----------------------------
++
++Whether the :command:`find_library` command should automatically search
++``libx32`` directories.
++
++``FIND_LIBRARY_USE_LIBX32_PATHS`` is a boolean specifying whether the
++:command:`find_library` command should automatically search the ``libx32``
++variant of directories called ``lib`` in the search path when building
++x32-abi binaries.
++
++See also the :variable:`CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX` variable.
+diff --git a/Help/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.rst b/Help/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.rst
+index f7c652440..ada89559f 100644
+--- a/Help/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.rst
++++ b/Help/variable/CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX.rst
+@@ -9,3 +9,4 @@ This overrides the behavior of related global properties:
+ 
+ * :prop_gbl:`FIND_LIBRARY_USE_LIB32_PATHS`
+ * :prop_gbl:`FIND_LIBRARY_USE_LIB64_PATHS`
++* :prop_gbl:`FIND_LIBRARY_USE_LIBX32_PATHS`
+diff --git a/Modules/CMakeCompilerABI.h b/Modules/CMakeCompilerABI.h
+index f2714b4ea..ad481d6f0 100644
+--- a/Modules/CMakeCompilerABI.h
++++ b/Modules/CMakeCompilerABI.h
+@@ -25,6 +25,10 @@ const char info_sizeof_dptr[] = {
+ #elif defined(__GNU__) && defined(__ELF__) && defined(__ARMEL__)
+ #define ABI_ID "ELF ARM"
+ 
++#elif defined(__linux__) && defined(__ELF__) && defined(__amd64__) &&         \
++  defined(__ILP32__)
++#define ABI_ID "ELF X32"
++
+ #elif defined(__ELF__)
+ #define ABI_ID "ELF"
+ #endif
+diff --git a/Modules/FindPkgConfig.cmake b/Modules/FindPkgConfig.cmake
+index a69081f20..54572f03e 100644
+--- a/Modules/FindPkgConfig.cmake
++++ b/Modules/FindPkgConfig.cmake
+@@ -312,6 +312,10 @@ macro(_pkg_check_modules_internal _is_required _is_silent _no_cmake_path _no_cma
+           if(uselib64 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+             list(APPEND _lib_dirs "lib64/pkgconfig")
+           endif()
++          get_property(uselibx32 GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS)
++          if(uselibx32 AND CMAKE_INTERNAL_PLATFORM_ABI STREQUAL "ELF X32")
++            list(APPEND _lib_dirs "libx32/pkgconfig")
++          endif()
+         endif()
+       endif()
+       list(APPEND _lib_dirs "lib/pkgconfig")
+diff --git a/Modules/Platform/UnixPaths.cmake b/Modules/Platform/UnixPaths.cmake
+index b216d03db..c1d2c03bf 100644
+--- a/Modules/Platform/UnixPaths.cmake
++++ b/Modules/Platform/UnixPaths.cmake
+@@ -86,3 +86,4 @@ list(APPEND CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES
+ # Enable use of lib32 and lib64 search path variants by default.
+ set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB32_PATHS TRUE)
+ set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
++set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIBX32_PATHS TRUE)
+diff --git a/Source/cmExportInstallFileGenerator.cxx b/Source/cmExportInstallFileGenerator.cxx
+index 64ea3c8a0..3b76a8722 100644
+--- a/Source/cmExportInstallFileGenerator.cxx
++++ b/Source/cmExportInstallFileGenerator.cxx
+@@ -195,8 +195,10 @@ void cmExportInstallFileGenerator::GenerateImportPrefix(std::ostream& os)
+        << " \"${CMAKE_CURRENT_LIST_FILE}\" PATH)\n";
+     if (cmHasLiteralPrefix(absDestS.c_str(), "/lib/") ||
+         cmHasLiteralPrefix(absDestS.c_str(), "/lib64/") ||
++        cmHasLiteralPrefix(absDestS.c_str(), "/libx32/") ||
+         cmHasLiteralPrefix(absDestS.c_str(), "/usr/lib/") ||
+-        cmHasLiteralPrefix(absDestS.c_str(), "/usr/lib64/")) {
++        cmHasLiteralPrefix(absDestS.c_str(), "/usr/lib64/") ||
++        cmHasLiteralPrefix(absDestS.c_str(), "/usr/libx32/")) {
+       // Handle "/usr move" symlinks created by some Linux distros.
+       /* clang-format off */
+       os <<
+diff --git a/Source/cmFindLibraryCommand.cxx b/Source/cmFindLibraryCommand.cxx
+index 69f9078a7..e92d672c3 100644
+--- a/Source/cmFindLibraryCommand.cxx
++++ b/Source/cmFindLibraryCommand.cxx
+@@ -43,7 +43,8 @@ bool cmFindLibraryCommand::InitialPass(std::vector<std::string> const& argsIn,
+     return true;
+   }
+ 
+-  // add custom lib<qual> paths instead of using fixed lib32 or lib64
++  // add custom lib<qual> paths instead of using fixed lib32, lib64 or
++  // libx32
+   if (const char* customLib = this->Makefile->GetDefinition(
+         "CMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX")) {
+     this->AddArchitecturePaths(customLib);
+@@ -60,6 +61,12 @@ bool cmFindLibraryCommand::InitialPass(std::vector<std::string> const& argsIn,
+              "FIND_LIBRARY_USE_LIB64_PATHS")) {
+     this->AddArchitecturePaths("64");
+   }
++  // add special 32 bit paths if this is an x32 compile.
++  else if (this->Makefile->PlatformIsx32() &&
++           this->Makefile->GetState()->GetGlobalPropertyAsBool(
++             "FIND_LIBRARY_USE_LIBX32_PATHS")) {
++    this->AddArchitecturePaths("x32");
++  }
+ 
+   std::string library = this->FindLibrary();
+   if (library != "") {
+diff --git a/Source/cmFindPackageCommand.cxx b/Source/cmFindPackageCommand.cxx
+index 60de74f41..4b2983775 100644
+--- a/Source/cmFindPackageCommand.cxx
++++ b/Source/cmFindPackageCommand.cxx
+@@ -92,6 +92,7 @@ cmFindPackageCommand::cmFindPackageCommand()
+   this->DebugMode = false;
+   this->UseLib32Paths = false;
+   this->UseLib64Paths = false;
++  this->UseLibx32Paths = false;
+   this->PolicyScope = true;
+   this->VersionMajor = 0;
+   this->VersionMinor = 0;
+@@ -173,6 +174,13 @@ bool cmFindPackageCommand::InitialPass(std::vector<std::string> const& args,
+     this->UseLib64Paths = true;
+   }
+ 
++  // Lookup whether libx32 paths should be used.
++  if (this->Makefile->PlatformIsx32() &&
++      this->Makefile->GetState()->GetGlobalPropertyAsBool(
++        "FIND_LIBRARY_USE_LIBX32_PATHS")) {
++    this->UseLibx32Paths = true;
++  }
++
+   // Check if User Package Registry should be disabled
+   if (this->Makefile->IsOn("CMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY")) {
+     this->NoUserRegistry = true;
+@@ -2002,6 +2010,9 @@ bool cmFindPackageCommand::SearchPrefix(std::string const& prefix_in)
+   if (this->UseLib64Paths) {
+     common.push_back("lib64");
+   }
++  if (this->UseLibx32Paths) {
++    common.push_back("libx32");
++  }
+   common.push_back("lib");
+   common.push_back("share");
+ 
+diff --git a/Source/cmFindPackageCommand.h b/Source/cmFindPackageCommand.h
+index d4548928d..61a8dd6f4 100644
+--- a/Source/cmFindPackageCommand.h
++++ b/Source/cmFindPackageCommand.h
+@@ -169,6 +169,7 @@ private:
+   bool DebugMode;
+   bool UseLib32Paths;
+   bool UseLib64Paths;
++  bool UseLibx32Paths;
+   bool PolicyScope;
+   std::string LibraryArchitecture;
+   std::vector<std::string> Names;
+diff --git a/Source/cmMakefile.cxx b/Source/cmMakefile.cxx
+index c75d101dd..9e87b4db6 100644
+--- a/Source/cmMakefile.cxx
++++ b/Source/cmMakefile.cxx
+@@ -2149,8 +2149,14 @@ bool cmMakefile::IsSet(const std::string& name) const
+ 
+ bool cmMakefile::PlatformIs32Bit() const
+ {
+-  if (const char* sizeof_dptr = this->GetDefinition("CMAKE_SIZEOF_VOID_P")) {
+-    return atoi(sizeof_dptr) == 4;
++  if (const char* plat_abi =
++        this->GetDefinition("CMAKE_INTERNAL_PLATFORM_ABI")) {
++    if ((strcmp(plat_abi, "ELF X32") != 0)) {
++      if (const char* sizeof_dptr =
++            this->GetDefinition("CMAKE_SIZEOF_VOID_P")) {
++        return atoi(sizeof_dptr) == 4;
++      }
++    }
+   }
+   return false;
+ }
+@@ -2163,6 +2169,16 @@ bool cmMakefile::PlatformIs64Bit() const
+   return false;
+ }
+ 
++bool cmMakefile::PlatformIsx32() const
++{
++  if (const char* plat_abi =
++        this->GetDefinition("CMAKE_INTERNAL_PLATFORM_ABI")) {
++    if (strcmp(plat_abi, "ELF X32") == 0)
++      return true;
++  }
++  return false;
++}
++
+ bool cmMakefile::PlatformIsAppleIos() const
+ {
+   std::string sdkRoot;
+diff --git a/Source/cmMakefile.h b/Source/cmMakefile.h
+index 4d5ce9884..4e48c8888 100644
+--- a/Source/cmMakefile.h
++++ b/Source/cmMakefile.h
+@@ -436,6 +436,8 @@ public:
+ 
+   /** Return whether the target platform is 64-bit.  */
+   bool PlatformIs64Bit() const;
++  /** Return whether the target platform is x32.  */
++  bool PlatformIsx32() const;
+ 
+   /** Return whether the target platform is Apple iOS.  */
+   bool PlatformIsAppleIos() const;
+-- 
+2.11.1
+

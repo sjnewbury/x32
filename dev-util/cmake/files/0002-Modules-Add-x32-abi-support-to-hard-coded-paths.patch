@@ -1,0 +1,145 @@
+From 5bc00b27c73c4bee5e48da99642edbf3f399696e Mon Sep 17 00:00:00 2001
+From: Steven Newbury <steve@snewbury.org.uk>
+Date: Mon, 27 Feb 2017 21:17:28 +0000
+Subject: [PATCH 2/3] Modules: Add x32-abi support to hard-coded paths
+
+Update hard-coded library paths in bundled CMake Modules for libx32 as
+used with x32-abi.
+---
+ Modules/CPackRPM.cmake         | 2 +-
+ Modules/FindDevIL.cmake        | 6 +++---
+ Modules/FindGLEW.cmake         | 2 +-
+ Modules/FindGTK2.cmake         | 2 ++
+ Modules/FindIce.cmake          | 2 +-
+ Modules/FindKDE3.cmake         | 2 ++
+ Modules/FindOpenAL.cmake       | 2 +-
+ Modules/GetPrerequisites.cmake | 2 +-
+ 8 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/Modules/CPackRPM.cmake b/Modules/CPackRPM.cmake
+index 722ee1593..b32feb541 100644
+--- a/Modules/CPackRPM.cmake
++++ b/Modules/CPackRPM.cmake
+@@ -1044,7 +1044,7 @@ function(cpack_rpm_prepare_content_list)
+   endif()
+ 
+   if(NOT DEFINED CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST)
+-    set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST /etc /etc/init.d /usr /usr/share /usr/share/doc /usr/bin /usr/lib /usr/lib64 /usr/include)
++    set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST /etc /etc/init.d /usr /usr/share /usr/share/doc /usr/bin /usr/lib /usr/lib64 /usr/libx32 /usr/include)
+     if(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION)
+       if(CPACK_RPM_PACKAGE_DEBUG)
+         message("CPackRPM:Debug: Adding ${CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION} to builtin omit list.")
+diff --git a/Modules/FindDevIL.cmake b/Modules/FindDevIL.cmake
+index 45fab829c..4b868a25c 100644
+--- a/Modules/FindDevIL.cmake
++++ b/Modules/FindDevIL.cmake
+@@ -45,7 +45,7 @@ find_path(IL_INCLUDE_DIR il.h
+ 
+ find_library(IL_LIBRARIES
+   NAMES IL DEVIL
+-  PATH_SUFFIXES lib64 lib lib32
++  PATH_SUFFIXES libx32 lib64 lib lib32
+   DOC "The file that corresponds to the base il library."
+ )
+ 
+@@ -53,7 +53,7 @@ find_library(IL_LIBRARIES
+ 
+ find_library(ILUT_LIBRARIES
+   NAMES ILUT
+-  PATH_SUFFIXES lib64 lib lib32
++  PATH_SUFFIXES libx32 lib64 lib lib32
+   DOC "The file that corresponds to the il (system?) utility library."
+ )
+ 
+@@ -61,7 +61,7 @@ find_library(ILUT_LIBRARIES
+ 
+ find_library(ILU_LIBRARIES
+   NAMES ILU
+-  PATH_SUFFIXES lib64 lib lib32
++  PATH_SUFFIXES libx32 lib64 lib lib32
+   DOC "The file that corresponds to the il utility library."
+ )
+ 
+diff --git a/Modules/FindGLEW.cmake b/Modules/FindGLEW.cmake
+index d8609e64d..11e872446 100644
+--- a/Modules/FindGLEW.cmake
++++ b/Modules/FindGLEW.cmake
+@@ -27,7 +27,7 @@
+ find_path(GLEW_INCLUDE_DIR GL/glew.h)
+ 
+ if(NOT GLEW_LIBRARY)
+-  find_library(GLEW_LIBRARY_RELEASE NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64)
++  find_library(GLEW_LIBRARY_RELEASE NAMES GLEW glew32 glew glew32s PATH_SUFFIXES lib64 libx32)
+   find_library(GLEW_LIBRARY_DEBUG NAMES GLEWd glew32d glewd PATH_SUFFIXES lib64)
+ 
+   include(${CMAKE_CURRENT_LIST_DIR}/SelectLibraryConfigurations.cmake)
+diff --git a/Modules/FindGTK2.cmake b/Modules/FindGTK2.cmake
+index 20d792467..2eca5f96c 100644
+--- a/Modules/FindGTK2.cmake
++++ b/Modules/FindGTK2.cmake
+@@ -292,8 +292,10 @@ function(_GTK2_FIND_INCLUDE_DIR _var _hdr)
+     find_path(GTK2_${_var}_INCLUDE_DIR ${_hdr}
+         PATHS
+             ${_gtk2_arch_dir}
++            /usr/local/libx32
+             /usr/local/lib64
+             /usr/local/lib
++            /usr/libx32
+             /usr/lib64
+             /usr/lib
+             /usr/X11R6/include
+diff --git a/Modules/FindIce.cmake b/Modules/FindIce.cmake
+index a61d4a804..e0286ee2c 100644
+--- a/Modules/FindIce.cmake
++++ b/Modules/FindIce.cmake
+@@ -198,7 +198,7 @@ function(_Ice_FIND)
+   endif()
+   # Generic 64-bit and 32-bit directories
+   list(APPEND ice_binary_suffixes "bin${_x64}" "bin")
+-  list(APPEND ice_library_suffixes "${_lib64}" "lib${_x64}" "lib")
++  list(APPEND ice_library_suffixes "libx32" "${_lib64}" "lib${_x64}" "lib")
+   list(APPEND ice_include_suffixes "include")
+   list(APPEND ice_slice_suffixes "slice")
+ 
+diff --git a/Modules/FindKDE3.cmake b/Modules/FindKDE3.cmake
+index 62e2a50b6..03216a5c1 100644
+--- a/Modules/FindKDE3.cmake
++++ b/Modules/FindKDE3.cmake
+@@ -221,6 +221,8 @@ get_filename_component(KDE3_LIB_DIR ${KDE3_KDECORE_LIBRARY} PATH )
+ if(NOT KDE3_LIBTOOL_DIR)
+    if(KDE3_KDECORE_LIBRARY MATCHES lib64)
+      set(KDE3_LIBTOOL_DIR /lib64/kde3)
++   elseif(KDE3_KDECORE_LIBRARY MATCHES libx32)
++     set(KDE3_LIBTOOL_DIR /libx32/kde3)
+    else()
+      set(KDE3_LIBTOOL_DIR /lib/kde3)
+    endif()
+diff --git a/Modules/FindOpenAL.cmake b/Modules/FindOpenAL.cmake
+index 8622b4c1f..c3d202ee8 100644
+--- a/Modules/FindOpenAL.cmake
++++ b/Modules/FindOpenAL.cmake
+@@ -79,7 +79,7 @@ find_library(OPENAL_LIBRARY
+   NAMES OpenAL al openal OpenAL32
+   HINTS
+     ENV OPENALDIR
+-  PATH_SUFFIXES lib64 lib libs64 libs ${_OpenAL_ARCH_DIR}
++  PATH_SUFFIXES libx32 lib64 lib libs64 libs ${_OpenAL_ARCH_DIR}
+   PATHS
+   ~/Library/Frameworks
+   /Library/Frameworks
+diff --git a/Modules/GetPrerequisites.cmake b/Modules/GetPrerequisites.cmake
+index 417af7c81..a3b97ab75 100644
+--- a/Modules/GetPrerequisites.cmake
++++ b/Modules/GetPrerequisites.cmake
+@@ -521,7 +521,7 @@ function(gp_resolved_file_type original_file file exepath dirs type_var)
+     string(TOLOWER "${resolved_file}" lower)
+ 
+     if(UNIX)
+-      if(resolved_file MATCHES "^(/lib/|/lib32/|/lib64/|/usr/lib/|/usr/lib32/|/usr/lib64/|/usr/X11R6/|/usr/bin/)")
++      if(resolved_file MATCHES "^(/lib/|/lib32/|/libx32/|/lib64/|/usr/lib/|/usr/lib32/|/usr/libx32/|/usr/lib64/|/usr/X11R6/|/usr/bin/)")
+         set(is_system 1)
+       endif()
+     endif()
+-- 
+2.11.1
+
