@@ -43,9 +43,9 @@ RESTRICT="test"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-1.48.0-disable_icu_rpath.patch"
-	"${FILESDIR}/${PN}-1.56.0-build-auto_index-tool.patch"
 	"${FILESDIR}/${PN}-1.58.0-x32-context.patch"
 	"${FILESDIR}/${PN}-1.62.0-no-forced-flags.patch"
+	"${FILESDIR}/${PN}-1.56.0-build-auto_index-tool.patch"
 	"${FILESDIR}/${PN}-1.65.0-fix-python.patch"
 )
 
