@@ -1,0 +1,33 @@
+--- ./libs/context/build/Jamfile.v2.orig	2017-12-13 23:56:42.000000000 +0000
++++ ./libs/context/build/Jamfile.v2	2018-04-22 20:31:05.204280279 +0100
+@@ -567,6 +567,30 @@
+    ;
+ 
+ # X86_64
++# X86_64/X32/ELF
++alias asm_sources
++   : asm/make_x86_64_sysv_elf_gas.S
++     asm/jump_x86_64_sysv_elf_gas.S
++     asm/ontop_x86_64_sysv_elf_gas.S
++   : <abi>x32
++     <address-model>64
++     <architecture>x86
++     <binary-format>elf
++     <toolset>clang
++   ;
++
++alias asm_sources
++   : asm/make_x86_64_sysv_elf_gas.S
++     asm/jump_x86_64_sysv_elf_gas.S
++     asm/ontop_x86_64_sysv_elf_gas.S
++   : <abi>x32
++     <address-model>64
++     <architecture>x86
++     <binary-format>elf
++     <toolset>gcc
++   ;
++
++# X86_64
+ # X86_64/SYSV/ELF
+ alias asm_sources
+    : asm/make_x86_64_sysv_elf_gas.S

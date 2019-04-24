@@ -24,3 +24,17 @@
          OPTIONS on $(targets) += $(option) ;
      }
  }
+--- ./tools/gcc.jam.orig	2018-10-14 12:10:01.083083872 +0000
++++ ./tools/gcc.jam	2018-10-14 12:15:46.261755299 +0000
+@@ -356,11 +356,6 @@
+ 
+     compile-link-flags <target-os>hpux/<address-model>32 : -milp32 ;
+     compile-link-flags <target-os>hpux/<address-model>64 : -mlp64 ;
+-
+-    local generic-os = [ set.difference $(all-os) : aix hpux ] ;
+-    local arch = power sparc x86 ;
+-    compile-link-flags <target-os>$(generic-os)/<architecture>$(arch)/<address-model>32 : -m32 ;
+-    compile-link-flags <target-os>$(generic-os)/<architecture>$(arch)/<address-model>64 : -m64 ;
+ }
+ 
+ {
