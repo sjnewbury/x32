@@ -1,0 +1,92 @@
+From 963c95558ac1167121393d584bf00641a26eda4d Mon Sep 17 00:00:00 2001
+From: Steven Newbury <steve@snewbury.org.uk>
+Date: Mon, 5 Nov 2018 09:29:05 +0000
+Subject: [PATCH] Add support for R_X86_64_TLSDESC
+
+This is based on the R_ARM_TLS_DESC support code as
+integrated in commit 874b3d3f6413c16597ec92ed92c57d6bfe2bbb68
+
+Signed-off-by: Steven Newbury <steve@snewbury.org.uk>
+---
+ src/arch-x86_64.c | 30 +++++++++++++++++++++++++++++-
+ 1 file changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/src/arch-x86_64.c b/src/arch-x86_64.c
+index 2f6c551..9b1b7fb 100644
+--- a/src/arch-x86_64.c
++++ b/src/arch-x86_64.c
+@@ -133,6 +133,7 @@ x86_64_prelink_rela (struct prelink_info *info, GElf_Rela *rela,
+ {
+   DSO *dso;
+   GElf_Addr value;
++  Elf64_Sword val;
+ 
+   dso = info->dso;
+   if (GELF_R_TYPE (rela->r_info) == R_X86_64_NONE
+@@ -184,6 +185,24 @@ x86_64_prelink_rela (struct prelink_info *info, GElf_Rela *rela,
+ 	return 0;
+       error (0, 0, "%s: R_X86_64_COPY reloc in shared library?", dso->filename);
+       return 1;
++    case R_X86_64_TLSDESC:
++      if (!dso->info_DT_TLSDESC_PLT)
++        {
++          error (0, 0,
++		 "%s: Unsupported R_X86_64_TLSDESC relocation in non-lazily bound object.",
++                 dso->filename);
++          return 1;
++        }
++      val = read_ule64 (dso, rela->r_offset + 8);
++      if (val != 0 && !dynamic_info_is_set (dso, DT_GNU_PRELINKED_BIT))
++        {
++          error (0, 0,
++		 "%s: Unexpected non-zero value (0x%x) in R_X86_64_TLSDESC?",
++                 dso->filename, val);
++          return 1;
++        }
++      write_le64 (dso, rela->r_offset + 8, dso->info_DT_TLSDESC_PLT);
++      break;
+     default:
+       error (0, 0, "%s: Unknown X86-64 relocation type %d", dso->filename,
+ 	     (int) GELF_R_TYPE (rela->r_info));
+@@ -303,6 +322,9 @@ x86_64_prelink_conflict_rela (DSO *dso, struct prelink_info *info,
+ 	/* Similarly IRELATIVE relocations always need conflicts.  */
+ 	case R_X86_64_IRELATIVE:
+ 	  break;
++	/* Likewise TLSDESC.  */
++	case R_X86_64_TLSDESC:
++	  break;
+ 	default:
+ 	  return 0;
+ 	}
+@@ -372,7 +394,9 @@ x86_64_prelink_conflict_rela (DSO *dso, struct prelink_info *info,
+ 	  break;
+ 	}
+       break;
+-
++    case R_X86_64_TLSDESC:
++      /* Nothing to do.  */
++      break;
+     default:
+       error (0, 0, "%s: Unknown X86-64 relocation type %d", dso->filename,
+ 	     (int) GELF_R_TYPE (rela->r_info));
+@@ -498,6 +522,9 @@ x86_64_undo_prelink_rela (DSO *dso, GElf_Rela *rela, GElf_Addr relaaddr)
+     case R_X86_64_TPOFF64:
+       write_le64 (dso, rela->r_offset, 0);
+       break;
++    case R_X86_64_TLSDESC:
++      write_le64 (dso, rela->r_offset + 8, 0);
++      break;
+     case R_X86_64_32:
+     case R_X86_64_PC32:
+       write_le32 (dso, rela->r_offset, 0);
+@@ -556,6 +583,7 @@ x86_64_reloc_class (int reloc_type)
+     case R_X86_64_DTPMOD64:
+     case R_X86_64_DTPOFF64:
+     case R_X86_64_TPOFF64:
++    case R_X86_64_TLSDESC:
+       return RTYPE_CLASS_TLS;
+     default: return RTYPE_CLASS_VALID;
+     }
+-- 
+2.19.1
+

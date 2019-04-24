@@ -1,0 +1,13 @@
+--- ./src/arch-x86_64.c~	2017-02-27 01:54:57.000000000 +0000
++++ ./src/arch-x86_64.c	2017-02-27 02:02:09.148997181 +0000
+@@ -601,8 +601,8 @@
+      does not take some library's VA slot.
+      Also, if this guard area isn't too small, typically
+      even dlopened libraries will get the slots they desire.  */
+-  .mmap_base = 0x41000000,
+-  .mmap_end =  0x60000000,
++  .mmap_base = 0x42000000,
++  .mmap_end =  0x8f000000,
+   .max_page_size = 0x200000,
+   .page_size = 0x1000
+ };

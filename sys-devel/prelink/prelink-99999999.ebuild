@@ -14,7 +14,10 @@ HOMEPAGE="https://git.yoctoproject.org/cgit/cgit.cgi/prelink-cross/ https://peop
 
 if [[ ${PV} == 99999999 ]]; then
 	inherit git-r3
-	EGIT_REPO_URI=git://git.yoctoproject.org/prelink-cross
+	#EGIT_REPO_URI=https://github.com/sjnewbury/prelink-cross.git
+	#EGIT_BRANCH=master_staging
+	EGIT_REPO_URI=https://git.yoctoproject.org/git/prelink-cross
+	EGIT_BRANCH=cross_prelink_staging
 	SRC_URI="doc? ( https://people.redhat.com/jakub/prelink/prelink.pdf )"
 	KEYWORDS=
 else
@@ -28,7 +31,7 @@ LICENSE="GPL-2"
 SLOT="0"
 IUSE="doc selinux"
 
-DEPEND=">=dev-libs/elfutils-0.100[static-libs(+)]
+DEPEND=">=dev-libs/elfutils-0.100
 	selinux? ( sys-libs/libselinux[static-libs(+)] )
 	!dev-libs/libelf
 	sys-libs/binutils-libs
@@ -42,9 +45,10 @@ src_prepare() {
 
 	epatch "${FILESDIR}"/${PN}-20130503-prelink-conf.patch
 	epatch "${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
-	epatch "${FILESDIR}"/${PN}-x32.patch
-	epatch "${FILESDIR}"/adjust-x32-mmap-range.patch
+	#epatch "${FILESDIR}"/${PN}-x32.patch
+	epatch "${FILESDIR}"/adjust-x32-mmap-range-r1.patch
 	epatch "${FILESDIR}"/prelink-link-bfd.patch
+	epatch "${FILESDIR}"/0001-Add-support-for-R_X86_64_TLSDESC.patch
 
 	# Disable build of documentation
 	sed -i -e '/SUBDIRS/s/doc //' Makefile.am
