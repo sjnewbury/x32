@@ -1,0 +1,47 @@
+--- mozilla-esr38/js/src/jstypes.h.x32fix	2017-03-21 08:17:52.446161040 +0100
++++ mozilla-esr38/js/src/jstypes.h	2017-03-21 08:18:23.531014466 +0100
+@@ -142,7 +142,7 @@
+ # endif
+ #elif defined(__GNUC__)
+ /* Additional GCC defines are when running on Solaris, AIX, and HPUX */
+-# if defined(__x86_64__) || defined(__sparcv9) || \
++# if (defined(__x86_64__) && !defined(__ILP32__)) || defined(__sparcv9) || \
+         defined(__64BIT__) || defined(__LP64__)
+ #  define JS_64BIT
+ # endif
+--- firefox-52.4.0esr/memory/mozjemalloc/jemalloc.c~	2017-05-12 02:25:50.000000000 +0200
++++ firefox-52.4.0esr/memory/mozjemalloc/jemalloc.c	2017-10-14 23:08:32.676380395 +0200
+@@ -331,7 +331,7 @@
+ #endif
+ #include <sys/time.h>
+ #include <sys/types.h>
+-#if !defined(MOZ_MEMORY_SOLARIS) && !defined(MOZ_MEMORY_ANDROID)
++#if !defined(MOZ_MEMORY_SOLARIS) && !defined(MOZ_MEMORY_ANDROID) && !defined(__ILP32__)
+ #include <sys/sysctl.h>
+ #endif
+ #include <sys/uio.h>
+--- firefox-52.4.0esr/js/src/old-configure.in.djit	2017-10-16 21:07:31.353333333 +0200
++++ firefox-52.4.0esr/js/src/old-configure.in	2017-10-16 21:37:42.479999989 +0200
+@@ -945,6 +945,9 @@ fi
+ dnl Configure JIT support
+ 
+ case "$target" in
++x86_64*-gnux32)
++    AC_DEFINE(JS_CPU_X86)
++    ;;
+ i?86-*)
+     ENABLE_ION=1
+     AC_DEFINE(JS_CPU_X86)
+--- firefox-52.4.0esr/js/src/jsmath.cpp.x32	2017-10-17 08:33:51.773333322 +0200
++++ firefox-52.4.0esr/js/src/jsmath.cpp	2017-10-17 08:38:07.073333327 +0200
+@@ -62,7 +62,9 @@
+ 
+ // Older glibc versions don't define SYS_getrandom, so we define it here if
+ // it's not available. See bug 995069.
+-# if defined(__x86_64__)
++# if defined(__x86_64__) && defined(__ILP32__)
++#  define GETRANDOM_NR (0x40000000 + 318)
++# elif defined(__x86_64__)
+ #  define GETRANDOM_NR 318
+ # elif defined(__i386__)
+ #  define GETRANDOM_NR 355
