@@ -1,0 +1,27 @@
+--- ./src/mpid/ch3/channels/nemesis/include/mpid_nem_memdefs.h.orig	2018-12-04 08:03:25.768463824 +0000
++++ ./src/mpid/ch3/channels/nemesis/include/mpid_nem_memdefs.h	2018-12-04 08:05:26.169992383 +0000
+@@ -131,8 +131,11 @@
+ 		      "lea (%%esi, %%ecx, 8), %%esi\n"
+ 		      "lea (%%edi, %%ecx, 8), %%edi\n"
+ 
++#if defined(__x86_64__) && defined(__ILP32__)
++		      "push %%rcx\n"        /* save n */
++#else
+ 		      "push %%ecx\n"        /* save n */
+-			  
++#endif			  
+ 		      "mov %%ecx, %%eax\n" /* prefetch loopctr = n/128 */
+ 		      "shr $4, %%eax\n" 
+ 		  
+@@ -148,7 +151,11 @@
+ 		      "dec %%eax\n"
+ 		      "jnz 1b\n"
+ 
++#if defined(__x86_64__) && defined(__ILP32__)
++		      "pop %%rcx\n" /* restore n */
++#else
+ 		      "pop %%ecx\n" /* restore n */
++#endif
+ 
+ 		      "mov %%ecx, %%eax\n" /* write loopctr = n/64 */
+ 		      "shr $3, %%eax\n"
