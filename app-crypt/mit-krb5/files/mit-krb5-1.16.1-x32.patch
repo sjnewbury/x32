@@ -1,0 +1,15 @@
+--- ./configure.in~	2018-12-04 11:57:58.000000000 +0000
++++ ./configure.in	2018-12-04 12:32:56.000682318 +0000
+@@ -330,7 +330,11 @@
+ 	aesni_obj=iaesx86.o
+ 	aesni_machine=x86
+ 	;;
+-    x86_64-*)
++    x86_64-*-gnux32)
++	aesni_obj=iaesx64.o
++	aesni_machine=x32
++	;;
++    x86_64-*-gnu)
+ 	aesni_obj=iaesx64.o
+ 	aesni_machine=amd64
+ 	;;
