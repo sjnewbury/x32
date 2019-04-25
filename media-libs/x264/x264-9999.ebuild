@@ -2,15 +2,15 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI=5
+EAPI=7
 
 inherit flag-o-matic multilib toolchain-funcs eutils multilib-minimal
 
 DESCRIPTION="A free library for encoding X264/AVC streams"
 HOMEPAGE="http://www.videolan.org/developers/x264.html"
 if [[ ${PV} == 9999 ]]; then
-	inherit git-2
-	EGIT_REPO_URI="git://git.videolan.org/x264.git"
+	inherit git-r3
+	EGIT_REPO_URI="https://github.com/mirror/x264.git"
 else
 	inherit versionator
 	MY_P="x264-snapshot-$(get_version_component_range 3)-2245"
@@ -36,10 +36,7 @@ RDEPEND="opencl? ( >=virtual/opencl-0-r3[${MULTILIB_USEDEP}] )
 
 DOCS="AUTHORS doc/*.txt"
 
-src_prepare() {
-	default
-	epatch "${FILESDIR}/${PN}-x32.patch"
-}
+PATCHES=( "${FILESDIR}/${PN}-x32.patch" )
 
 multilib_src_configure() {
 	tc-export CC
