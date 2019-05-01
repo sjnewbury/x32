@@ -1,0 +1,11 @@
+--- ./src/dso.c~	2019-05-01 17:04:52.000000000 +0000
++++ ./src/dso.c	2019-05-01 17:05:48.499325829 +0000
+@@ -1765,7 +1765,7 @@
+   if (prepare_write_dso (dso))
+     return 1;
+ 
+-  if (! dso->permissive && ELF_F_PERMISSIVE)
++  if (! dso->permissive & ELF_F_PERMISSIVE)
+     elf_flagelf (dso->elf, ELF_C_CLR, ELF_F_PERMISSIVE);
+ 
+   if (elf_update (dso->elf, ELF_C_WRITE) == -1)

@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
-EAPI="5"
+EAPI="7"
 
 MY_PN="${PN}-cross"
 MY_P="${MY_PN}-${PV}"
@@ -39,16 +39,18 @@ DEPEND=">=dev-libs/elfutils-0.100
 RDEPEND="${DEPEND}
 	>=sys-devel/binutils-2.18"
 
+PATCHES=(
+	"${FILESDIR}"/${PN}-20130503-prelink-conf.patch
+	"${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
+	"${FILESDIR}"/adjust-x32-mmap-range-r1.patch
+	"${FILESDIR}"/prelink-link-bfd.patch
+	"${FILESDIR}"/0001-Add-support-for-R_X86_64_TLSDESC.patch
+	"${FILESDIR}"/${PN}-bitwise_AND.patch
+)
+
 
 src_prepare() {
 	default
-
-	epatch "${FILESDIR}"/${PN}-20130503-prelink-conf.patch
-	epatch "${FILESDIR}"/${PN}-20130503-libiberty-md5.patch
-	#epatch "${FILESDIR}"/${PN}-x32.patch
-	epatch "${FILESDIR}"/adjust-x32-mmap-range-r1.patch
-	epatch "${FILESDIR}"/prelink-link-bfd.patch
-	epatch "${FILESDIR}"/0001-Add-support-for-R_X86_64_TLSDESC.patch
 
 	# Disable build of documentation
 	sed -i -e '/SUBDIRS/s/doc //' Makefile.am

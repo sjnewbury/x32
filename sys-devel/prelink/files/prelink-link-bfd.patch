@@ -1,5 +1,5 @@
---- src/Makefile.am~	2017-03-07 18:35:42.000000000 +0000
-+++ src/Makefile.am	2017-03-07 18:35:58.950961825 +0000
+--- ./src/Makefile.am~	2017-03-07 18:35:42.000000000 +0000
++++ ./src/Makefile.am	2017-03-07 18:35:58.950961825 +0000
 @@ -27,11 +27,11 @@
  		  prelinktab.h reloc.c reloc.h space.c undo.c undoall.c      \
  		  verify.c md5.c md5.h sha.c sha.h 	     \
