@@ -17,7 +17,7 @@ if [[ ${PV} == 99999999 ]]; then
 	#EGIT_REPO_URI=https://github.com/sjnewbury/prelink-cross.git
 	#EGIT_BRANCH=master_staging
 	EGIT_REPO_URI=https://git.yoctoproject.org/git/prelink-cross
-	EGIT_BRANCH=cross_prelink_staging
+	EGIT_BRANCH=cross_prelink #_staging
 	SRC_URI="doc? ( https://people.redhat.com/jakub/prelink/prelink.pdf )"
 	KEYWORDS=
 else
